@@ -11,7 +11,7 @@
             "cwd": "${workspaceFolder}/src/MaaBilling",
             "module": "uvicorn",
             "args": [
-                "__main__:app",
+                "main:app",
                 "--reload"
             ],
             "jinja": true
