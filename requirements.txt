@@ -1,1 +1,5 @@
 fastapi
+aiohttp
+loguru
+peewee
+pymysql
