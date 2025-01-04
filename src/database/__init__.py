@@ -49,10 +49,11 @@ class Plan(Model):
     platform = CharField()
     plan_id = CharField()
 
+    title = TextField()
+    valid_days = IntegerField()
     applications = TextField()
     modules = TextField()
     cdk_number = IntegerField()
-    valid_days = IntegerField()
 
     class Meta:
         database = db

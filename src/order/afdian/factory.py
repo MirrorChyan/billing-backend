@@ -42,7 +42,7 @@ async def process_order(out_trade_no: str) -> Tuple[bool, str]:
         plan = Plan.get(Plan.platform == "afdian", Plan.plan_id == order["plan_id"])
         logger.info(
             f"Plan found, out_trade_no: {out_trade_no}, \
-plan: {plan}, applications: {plan.applications}, modules: {plan.modules}, valid_days: {plan.valid_days}"
+plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         )
     except Exception as e:
         logger.error(f"Plan not found, out_trade_no: {out_trade_no}, error: {e}")
