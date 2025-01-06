@@ -1,4 +1,3 @@
-import os
 from loguru import logger
 from fastapi import APIRouter
 
