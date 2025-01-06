@@ -38,7 +38,8 @@ async def query(url: str, params: dict) -> dict:
         async with session.post(url, json=query_body) as response:
             response = await response.json()
             logger.debug(f"url: {url}, params: {params}, response: {response}")
-            return response
+
+    return response
 
 
 async def query_order_by_out_trade_no(out_trade_no: str) -> dict:

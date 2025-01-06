@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 import json
 
 from src.database import Bill, Plan
+from src.cdk.query_cdk import query_cdk
 from .query_afdian import query_order_by_out_trade_no
-from .query_cdk import query_cdk
 
 
 async def process_order(out_trade_no: str) -> Tuple[bool, str]:
@@ -66,7 +66,8 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         logger.error(f"Plan not found, out_trade_no: {out_trade_no}, error: {e}")
         return False, "Plan not found"
 
-    cdk = await query_cdk(now + timedelta(days=plan.valid_days))
+    expired = now + timedelta(days=plan.valid_days)
+    cdk = await query_cdk(expired)
     if not cdk:
         logger.error(f"Query CDK failed, out_trade_no: {out_trade_no}")
         return False, "Query CDK failed"
@@ -74,6 +75,7 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
     try:
         bill = Bill.get(Bill.platform == "afdian", Bill.order_id == out_trade_no)
         bill.cdk = cdk
+        bill.expired_at = expired
         bill.save()
     except Exception as e:
         logger.error(f"Update bill failed, out_trade_no: {out_trade_no}, error: {e}")

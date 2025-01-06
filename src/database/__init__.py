@@ -36,6 +36,9 @@ class Bill(Model):
     original_price = CharField()
     raw_data = TextField()
 
+    # from plan
+    expired_at = DateTimeField()
+
     # from backend
 
     cdk = TextField()

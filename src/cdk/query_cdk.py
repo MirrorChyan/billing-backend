@@ -16,15 +16,16 @@ async def query_cdk(expireTime: datetime) -> Optional[str]:
             response = await response.text()
             response = json.loads(response)
             logger.debug(f"url: {url}, query_body: {query_body}, response: {response}")
-            error_code = response.get("code", 1)
-            if error_code:
-                logger.error(f"Query CDK failed, error_code: {error_code}")
-                return None
 
-            data = response.get("data", "")
-            if not data:
-                logger.error(f"Query CDK failed, data is empty")
-                return None
+    error_code = response.get("code", 1)
+    if error_code:
+        logger.error(f"Query CDK failed, error_code: {error_code}")
+        return None
 
-            logger.info(f"cdk: {data}")
-            return data
+    data = response.get("data", "")
+    if not data:
+        logger.error(f"Query CDK failed, data is empty")
+        return None
+
+    logger.info(f"cdk: {data}")
+    return data
