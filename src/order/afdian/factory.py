@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Tuple
 from loguru import logger
 from datetime import datetime, timedelta
+import json
 
 from src.database import Bill, Plan
 from .query_afdian import query_order_by_out_trade_no
@@ -27,15 +28,6 @@ async def process_order(out_trade_no: str) -> Tuple[bool, str]:
 
     now = datetime.now()
     try:
-        # Bill.create(
-        #     platform="afdian",
-        #     order_id=order["out_trade_no"],
-        #     plan_id=order["plan_id"],
-        #     user_id=order["user_id"],
-        #     created_at=now,
-        #     actually_paid=order["total_amount"],
-        #     original_price=order["show_amount"],
-        # )
         bill = Bill.get_or_create(
             platform="afdian",
             order_id=order["out_trade_no"],
@@ -45,11 +37,11 @@ async def process_order(out_trade_no: str) -> Tuple[bool, str]:
                 "created_at": now,
                 "actually_paid": order["total_amount"],
                 "original_price": order["show_amount"],
+                "raw_data": json.dumps(response),
             },
         )
     except Exception as e:
         logger.error(f"Create bill failed, out_trade_no: {out_trade_no}, error: {e}")
-        # return False, "Create bill failed"
 
     if not bill:
         logger.error(f"Create bill failed, out_trade_no: {out_trade_no}")

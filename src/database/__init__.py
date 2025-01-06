@@ -34,6 +34,7 @@ class Bill(Model):
     created_at = DateTimeField()
     actually_paid = CharField()
     original_price = CharField()
+    raw_data = TextField()
 
     # from backend
 
