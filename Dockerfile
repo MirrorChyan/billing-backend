@@ -11,3 +11,4 @@ COPY . .
 EXPOSE 8000
 
 ENTRYPOINT ["python3", "-m", "uvicorn", "main:app"]
+
