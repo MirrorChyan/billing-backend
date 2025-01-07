@@ -9,6 +9,7 @@ on:
     paths:
       - ".github/workflows/build_docker.yml"
       - "Dockerfile"
+      - "requirements.txt"
       - "src/**"
       - "**.py"
 
