@@ -10,4 +10,4 @@ COPY ..
 
 EXPOSE 8000
 
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["uvicorn", "main:app"]
