@@ -13,9 +13,7 @@ async def acquire_cdk(expireTime: datetime) -> Optional[str]:
     }
     async with ClientSession() as session:
         async with session.post(settings.cdk_acquire_api, json=query_body) as response:
-            # response = await response.json()
-            response = await response.text()
-            response = json.loads(response)
+            response = await response.json()
             logger.debug(f"url: {settings.cdk_acquire_api}, query_body: {query_body}, response: {response}")
 
     error_code = response.get("code", 1)
