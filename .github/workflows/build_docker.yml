@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "main"
+      - "ci/**"
     paths:
       - ".github/workflows/build.yml"
       - "src/**"
