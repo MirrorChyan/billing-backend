@@ -7,7 +7,8 @@ on:
       - "main"
       - "ci/**"
     paths:
-      - ".github/workflows/build.yml"
+      - ".github/workflows/build_docker.yml"
+      - "Dockerfile"
       - "src/**"
       - "**.py"
 
