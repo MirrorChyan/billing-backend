@@ -9,12 +9,14 @@ from peewee import (
     IntegerField,
 )
 
+from src.config import settings
+
 db = MySQLDatabase(
-    database="mfwr",
-    host="127.0.0.1",
-    user="root",
-    password="admin",
-    port=13306,
+    database=settings.database,
+    host=settings.database_host,
+    port=settings.database_port,
+    user=settings.database_user,
+    password=settings.database_passwd,
     charset="utf8mb4",
 )
 
@@ -45,7 +47,7 @@ class Bill(Model):
 
     class Meta:
         database = db
-        table_name = "billing_bill"
+        table_name = "bill"
         primary_key = CompositeKey("platform", "order_id")
 
 
@@ -61,7 +63,7 @@ class Plan(Model):
 
     class Meta:
         database = db
-        table_name = "billing_plan"
+        table_name = "plan"
         primary_key = CompositeKey("platform", "plan_id")
 
 

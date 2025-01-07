@@ -1,29 +1,22 @@
-import os
 from loguru import logger
 from fastapi import APIRouter
 
+from src.config import settings
 from .factory import process_order
 
 router = APIRouter()
 
 
-AFDIAN_WEBHOOK_SECRET = os.getenv("AFDIAN_WEBHOOK_SECRET")
-AFDIAN_TEST_OUT_TRADE_NO = os.getenv("AFDIAN_TEST_OUT_TRADE_NO")
-
-if not AFDIAN_WEBHOOK_SECRET:
-    raise ValueError("AFDIAN_WEBHOOK_SECRET is not set")
-
-
-@router.post("/order/afdian/webhook/" + AFDIAN_WEBHOOK_SECRET)
+@router.post("/order/afdian/webhook/" + settings.afdian_webhook_secret)
 async def afdian_webhook(webhook_body: dict):
     logger.debug(f"webhook_body: {webhook_body}")
 
     out_trade_no = webhook_body.get("data", {}).get("order", {}).get("out_trade_no")
-    if AFDIAN_TEST_OUT_TRADE_NO:
+    if settings.afdian_test_out_trade_no:
         logger.warning(
-            f"AFDIAN_TEST_OUT_TRADE_NO is set, using it for testing: {AFDIAN_TEST_OUT_TRADE_NO}"
+            f"AFDIAN_TEST_OUT_TRADE_NO is set, using it for testing: {settings.afdian_test_out_trade_no}"
         )
-        out_trade_no = AFDIAN_TEST_OUT_TRADE_NO
+        out_trade_no = settings.afdian_test_out_trade_no
 
     logger.info(f"out_trade_no: {out_trade_no}")
     if not out_trade_no:

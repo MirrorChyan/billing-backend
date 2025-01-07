@@ -4,18 +4,19 @@ from datetime import datetime
 from typing import Optional
 import json
 
+from src.config import settings
 
-async def query_cdk(expireTime: datetime) -> Optional[str]:
-    url = "http://127.0.0.1:9768/acquire"
+
+async def acquire_cdk(expireTime: datetime) -> Optional[str]:
     query_body = {
         "expireTime": expireTime.strftime("%Y-%m-%d %H:%M:%S"),
     }
     async with ClientSession() as session:
-        async with session.post(url, json=query_body) as response:
+        async with session.post(settings.cdk_acquire_api, json=query_body) as response:
             # response = await response.json()
             response = await response.text()
             response = json.loads(response)
-            logger.debug(f"url: {url}, query_body: {query_body}, response: {response}")
+            logger.debug(f"url: {settings.cdk_acquire_api}, query_body: {query_body}, response: {response}")
 
     error_code = response.get("code", 1)
     if error_code:

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import json
 
 from src.database import Bill, Plan
-from src.cdk.query_cdk import query_cdk
+from src.cdk.acquire_cdk import acquire_cdk
 from .query_afdian import query_order_by_out_trade_no
 
 
@@ -67,7 +67,7 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         return False, "Plan not found"
 
     expired = now + timedelta(days=plan.valid_days)
-    cdk = await query_cdk(expired)
+    cdk = await acquire_cdk(expired)
     if not cdk:
         logger.error(f"Query CDK failed, out_trade_no: {out_trade_no}")
         return False, "Query CDK failed"

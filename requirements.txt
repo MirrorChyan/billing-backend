@@ -3,3 +3,5 @@ aiohttp
 loguru
 peewee
 pymysql
+python-dotenv
+pydantic_settings
