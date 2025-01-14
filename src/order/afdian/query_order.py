@@ -20,7 +20,7 @@ async def query_order(order_id: str):
         plan = Plan.get(Plan.platform == "afdian", Plan.plan_id == bill.plan_id)
     except Exception as e:
         logger.error(f"Plan not found, order_id: {order_id}, error: {e}")
-        return {"ec": 403, "msg": "Plan not found"}
+        return {"ec": 500, "msg": "Plan not found"}
 
     return {
         "ec": 200,
