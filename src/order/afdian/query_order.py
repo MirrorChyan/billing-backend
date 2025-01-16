@@ -19,11 +19,10 @@ async def query_order(order_id: str):
         bill = Bill.get(Bill.platform == "afdian", Bill.order_id == order_id)
     except Exception as e:
         logger.warning(f"Query bill failed, order_id: {order_id}, error: {e}")
-
-    bill, message = await process_order(order_id)
-    if not bill:
-        logger.error(f"order not found, order_id: {order_id}")
-        return { "ec": 404, "msg": message }
+        bill, message = await process_order(order_id)
+        if not bill:
+            logger.error(f"order not found, order_id: {order_id}")
+            return { "ec": 404, "msg": message }
 
     try:
         plan = Plan.get(Plan.platform == "afdian", Plan.plan_id == bill.plan_id)
