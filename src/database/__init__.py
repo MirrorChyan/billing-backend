@@ -67,7 +67,7 @@ class Bill(Model):
         primary_key = CompositeKey("platform", "order_id")
 
 
-class CheckIn(Plan):
+class CheckIn(Model):
     cdk = ForeignKeyField(Bill, field="cdk", backref="check_in")
     activated_at = DateTimeField()
     application = CharField()
