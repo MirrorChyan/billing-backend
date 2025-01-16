@@ -2,13 +2,14 @@ from loguru import logger
 from fastapi import APIRouter
 from datetime import datetime
 
+from src.config import settings
 from src.database import CheckIn
 
 
 router = APIRouter()
 
 
-@router.post("/check_in")
+@router.post("/check_in/" + settings.check_in_secret)
 async def check_in(body: dict):
     logger.debug(f"body: {body}")
     cdk = body.get("cdk", "")

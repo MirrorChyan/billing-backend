@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     cdk_acquire_api: str
 
+    check_in_secret: str
+
     class Config:
         env_file = ".env"
 
