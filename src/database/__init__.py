@@ -7,6 +7,7 @@ from peewee import (
     TextField,
     DateTimeField,
     IntegerField,
+    ForeignKeyField,
 )
 
 from src.config import settings
@@ -23,6 +24,22 @@ db = MySQLDatabase(
 if not db.connect():
     logger.error("Database connection failed")
     raise ValueError("Database connection failed")
+
+
+class Plan(Model):
+    platform = CharField()
+    plan_id = CharField()
+
+    title = TextField()
+    valid_days = IntegerField()
+    applications = TextField()
+    modules = TextField()
+    cdk_number = IntegerField()
+
+    class Meta:
+        database = db
+        table_name = "plan"
+        primary_key = CompositeKey("platform", "plan_id")
 
 
 class Bill(Model):
@@ -42,8 +59,7 @@ class Bill(Model):
     expired_at = DateTimeField()
 
     # from backend
-
-    cdk = TextField()
+    cdk = CharField(unique=True)
 
     class Meta:
         database = db
@@ -51,21 +67,13 @@ class Bill(Model):
         primary_key = CompositeKey("platform", "order_id")
 
 
-class Plan(Model):
-    platform = CharField()
-    plan_id = CharField()
-
-    title = TextField()
-    valid_days = IntegerField()
-    applications = TextField()
-    modules = TextField()
-    cdk_number = IntegerField()
-
-    class Meta:
-        database = db
-        table_name = "plan"
-        primary_key = CompositeKey("platform", "plan_id")
+class CheckIn(Plan):
+    cdk = ForeignKeyField(Bill, field="cdk", backref="check_in")
+    activated_at = DateTimeField()
+    application = CharField()
+    module = CharField()
 
 
-Bill.create_table()
 Plan.create_table()
+Bill.create_table()
+CheckIn.create_table()
