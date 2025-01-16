@@ -2,6 +2,7 @@ from loguru import logger
 from fastapi import APIRouter
 
 from src.database import Bill, Plan
+from .factory import process_order
 
 router = APIRouter()
 
@@ -10,11 +11,19 @@ router = APIRouter()
 async def query_order(order_id: str):
     logger.debug(f"order_id: {order_id}")
 
+    if not order_id:
+        logger.error(f"order_id is null")
+        return {"ec": 404, "msg": "Order not found"}
+
     try:
         bill = Bill.get(Bill.platform == "afdian", Bill.order_id == order_id)
     except Exception as e:
-        logger.error(f"Query bill failed, order_id: {order_id}, error: {e}")
-        return {"ec": 404, "msg": "Bill not found"}
+        logger.warning(f"Query bill failed, order_id: {order_id}, error: {e}")
+
+    bill, message = await process_order(order_id)
+    if not bill:
+        logger.error(f"order not found, order_id: {order_id}")
+        return { "ec": 404, "msg": message }
 
     try:
         plan = Plan.get(Plan.platform == "afdian", Plan.plan_id == bill.plan_id)

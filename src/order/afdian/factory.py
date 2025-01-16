@@ -15,14 +15,14 @@ async def process_order(out_trade_no: str) -> Tuple[bool, str]:
         logger.error(
             f"Query order failed, out_trade_no: {out_trade_no}, response: {response}"
         )
-        return False, "Query order failed"
+        return None, "Query order failed"
 
     order = response.get("data", {}).get("list", [])
     if not order:
         logger.error(
             f"Order not found, out_trade_no: {out_trade_no}, response: {response}"
         )
-        return False, "Order not found"
+        return None, "Order not found"
 
     order = order[0]
 
@@ -45,16 +45,16 @@ async def process_order(out_trade_no: str) -> Tuple[bool, str]:
 
     if not bill:
         logger.error(f"Create bill failed, out_trade_no: {out_trade_no}")
-        return False, "Create bill failed"
+        return None, "Create bill failed"
 
     bill = bill[0]
     if not bill:
         logger.error(f"Bill not found, out_trade_no: {out_trade_no}")
-        return False, "Bill not found"
+        return None, "Bill not found"
 
     if bill.cdk:
         logger.info(f"CDK already exists, out_trade_no: {out_trade_no}")
-        return False, "CDK already exists"
+        return None, "CDK already exists"
 
     try:
         plan = Plan.get(Plan.platform == "afdian", Plan.plan_id == order["plan_id"])
@@ -64,13 +64,13 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         )
     except Exception as e:
         logger.error(f"Plan not found, out_trade_no: {out_trade_no}, error: {e}")
-        return False, "Plan not found"
+        return None, "Plan not found"
 
     expired = now + timedelta(days=plan.valid_days)
     cdk = await acquire_cdk(expired)
     if not cdk:
         logger.error(f"Query CDK failed, out_trade_no: {out_trade_no}")
-        return False, "Query CDK failed"
+        return None, "Query CDK failed"
 
     try:
         bill = Bill.get(Bill.platform == "afdian", Bill.order_id == out_trade_no)
@@ -79,6 +79,6 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         bill.save()
     except Exception as e:
         logger.error(f"Update bill failed, out_trade_no: {out_trade_no}, error: {e}")
-        return False, "Update bill failed"
+        return None, "Update bill failed"
 
-    return True, "OK"
+    return bill, "OK"
