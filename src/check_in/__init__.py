@@ -14,13 +14,14 @@ async def check_in(body: dict):
     logger.debug(f"body: {body}")
     cdk = body.get("cdk", "")
     res_id = body.get("res_id", "")
-    if not cdk or not res:
-        logger.error(f"no cdk or res field")
-        return {"ec": 400, "em": "no cdk or res field"}
+    if not cdk or not res_id:
+        logger.error(f"no cdk or res_id field")
+        return {"ec": 400, "em": "no cdk or res_id field"}
 
     now = datetime.now()
-    user_agent = body.get("user_agent", "")
+
     module = body.get("module", "") 
+    user_agent = body.get("user_agent", "")
 
     try:
         CheckIn.create(
@@ -32,7 +33,7 @@ async def check_in(body: dict):
         )
 
     except Exception as e:
-        logger.error(f"check_in failed, cdk: {cdk}, res: {res}")
-        return {"ec": 403, "em": f"check_in failed, cdk: {cdk}, res: {res}"}
+        logger.error(f"check_in failed, cdk: {cdk}, res_id: {res_id}")
+        return {"ec": 403, "em": f"check_in failed, cdk: {cdk}, res_id: {res_id}"}
 
     return {"ec": 200, "em": "OK"}
