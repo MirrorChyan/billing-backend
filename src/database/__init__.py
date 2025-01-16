@@ -68,7 +68,7 @@ class Bill(Model):
 
 
 class CheckIn(Model):
-    cdk = ForeignKeyField(Bill, field="cdk", backref="check_in")
+    cdk = ForeignKeyField(Bill, field="cdk", backref="check_in", primary_key=True)
     activated_at = DateTimeField()
     application = CharField()
     module = CharField()
