@@ -73,6 +73,10 @@ class CheckIn(Plan):
     application = CharField()
     module = CharField()
 
+    class Meta:
+        database = db
+        table_name = "checkin"
+
 
 Plan.create_table()
 Bill.create_table()
