@@ -13,10 +13,10 @@ router = APIRouter()
 async def check_in(body: dict):
     logger.debug(f"body: {body}")
     cdk = body.get("cdk", "")
-    res_id = body.get("res_id", "")
-    if not cdk or not res_id:
-        logger.error(f"no cdk or res_id field")
-        return {"ec": 400, "em": "no cdk or res_id field"}
+    application = body.get("application", "")
+    if not cdk or not application:
+        logger.error(f"no cdk or application field")
+        return {"ec": 400, "em": "no cdk or application field"}
 
     now = datetime.now()
 
@@ -27,13 +27,13 @@ async def check_in(body: dict):
         CheckIn.create(
             cdk=cdk,
             activated_at=now,
-            application=res_id,
+            application=application,
             module=module,
             user_agent=user_agent
         )
 
     except Exception as e:
-        logger.error(f"check_in failed, cdk: {cdk}, res_id: {res_id}")
-        return {"ec": 403, "em": f"check_in failed, cdk: {cdk}, res_id: {res_id}"}
+        logger.error(f"check_in failed, cdk: {cdk}, application: {application}")
+        return {"ec": 403, "em": f"check_in failed, cdk: {cdk}, application: {application}"}
 
     return {"ec": 200, "em": "OK"}
