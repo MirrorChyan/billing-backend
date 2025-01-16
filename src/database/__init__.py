@@ -72,6 +72,7 @@ class CheckIn(Model):
     activated_at = DateTimeField()
     application = CharField()
     module = CharField()
+    user_agent = CharField()
 
     class Meta:
         database = db
