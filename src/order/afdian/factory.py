@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Any
 from loguru import logger
 from datetime import datetime, timedelta
 import json
@@ -9,7 +9,7 @@ from src.cdk.acquire_cdk import acquire_cdk
 from .query_afdian import query_order_by_out_trade_no
 
 
-async def process_order(out_trade_no: str) -> Tuple[bool, str]:
+async def process_order(out_trade_no: str) -> Tuple[Any, str]:
     response = await query_order_by_out_trade_no(out_trade_no)
     if not response or response.get("ec") != 200:
         logger.error(
@@ -42,6 +42,7 @@ async def process_order(out_trade_no: str) -> Tuple[bool, str]:
         )
     except Exception as e:
         logger.error(f"Create bill failed, out_trade_no: {out_trade_no}, error: {e}")
+        return None, "Create bill failed"
 
     if not bill:
         logger.error(f"Create bill failed, out_trade_no: {out_trade_no}")

@@ -1,6 +1,6 @@
 from loguru import logger
 from peewee import (
-    MySQLDatabase,
+    ReconnectMySQLDatabase,
     CompositeKey,
     Model,
     CharField,
@@ -12,7 +12,7 @@ from peewee import (
 
 from src.config import settings
 
-db = MySQLDatabase(
+db = ReconnectMySQLDatabase(
     database=settings.database,
     host=settings.database_host,
     port=settings.database_port,
