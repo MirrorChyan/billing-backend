@@ -13,8 +13,10 @@ from playhouse.shortcuts import ReconnectMixin
 
 from src.config import settings
 
+
 class ReconnectMySQLDatabase(ReconnectMixin, MySQLDatabase):
     pass
+
 
 db = ReconnectMySQLDatabase(
     database=settings.database,
