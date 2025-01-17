@@ -8,15 +8,20 @@ router = APIRouter()
 
 
 @router.get("/order/afdian")
-async def query_order(order_id: str):
-    logger.debug(f"order_id: {order_id}")
+async def query_order(order_id: str = None, custom_order_id: str = None):
+    logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
 
-    if not order_id:
-        logger.error(f"order_id is null")
-        return {"ec": 404, "msg": "Order not found"}
+    if not order_id and not custom_order_id:
+        logger.error(f"order_id and custom_order_id is None")
+        return {"ec": 404, "msg": "order_id is required"}
 
     try:
-        bill = Bill.get(Bill.platform == "afdian", Bill.order_id == order_id)
+        if order_id:
+            bill = Bill.get(Bill.platform == "afdian", Bill.order_id == order_id)
+        elif custom_order_id:
+            bill = Bill.get(Bill.platform == "afdian", Bill.custom_order_id == custom_order_id)
+        else:
+            return {"ec": 404, "msg": "order_id is required"}
     except Exception as e:
         # 如果订单号是正确的，能走到这里说明没收到爱发电的推送
         # 主动去爱发电查一下

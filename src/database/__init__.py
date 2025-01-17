@@ -47,6 +47,7 @@ class Bill(Model):
 
     platform = CharField()
     order_id = CharField()
+    custom_order_id = CharField()
 
     plan_id = CharField()
     user_id = CharField()
