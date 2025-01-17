@@ -1,6 +1,6 @@
 from loguru import logger
 from peewee import (
-    ReconnectMySQLDatabase,
+    MySQLDatabase,
     CompositeKey,
     Model,
     CharField,
@@ -9,8 +9,12 @@ from peewee import (
     IntegerField,
     ForeignKeyField,
 )
+from playhouse.shortcuts import ReconnectMixin
 
 from src.config import settings
+
+class ReconnectMySQLDatabase(ReconnectMixin, MySQLDatabase):
+    pass
 
 db = ReconnectMySQLDatabase(
     database=settings.database,

@@ -6,3 +6,4 @@ peewee
 pymysql
 python-dotenv
 pydantic_settings
+playhouse
