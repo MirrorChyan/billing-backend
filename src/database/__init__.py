@@ -58,6 +58,7 @@ class Bill(Model):
     plan_id = CharField()
     user_id = CharField()
     created_at = DateTimeField()
+    buy_count = IntegerField()
     actually_paid = CharField()
     original_price = CharField()
     raw_data = TextField()

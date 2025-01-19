@@ -27,6 +27,7 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
     order = order[0]
 
     now = datetime.now()
+    buy_count = order.get("sku_detail", [{}])[0].get("count", 1)
     try:
         bill = Bill.get_or_create(
             platform="afdian",
@@ -36,6 +37,7 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
                 "plan_id": order["plan_id"],
                 "user_id": order["user_id"],
                 "created_at": now,
+                "buy_count": buy_count,
                 "actually_paid": order["total_amount"],
                 "original_price": order["show_amount"],
                 "raw_data": json.dumps(response),
@@ -68,7 +70,7 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         logger.error(f"Plan not found, out_trade_no: {out_trade_no}, error: {e}")
         return None, "Plan not found"
 
-    expired = now + timedelta(days=plan.valid_days)
+    expired = now + timedelta(days=plan.valid_days * buy_count)
     cdk = await acquire_cdk(expired)
     if not cdk:
         logger.error(f"Query CDK failed, out_trade_no: {out_trade_no}")
