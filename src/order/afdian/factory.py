@@ -29,7 +29,7 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
     now = datetime.now()
     buy_count = order.get("sku_detail", [{}])[0].get("count", 1)
     try:
-        bill = Bill.get_or_create(
+        bill, created = Bill.get_or_create(
             platform="afdian",
             order_id=order["out_trade_no"],
             defaults={
@@ -47,11 +47,6 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
         logger.error(f"Create bill failed, out_trade_no: {out_trade_no}, error: {e}")
         return None, "Create bill failed"
 
-    if not bill:
-        logger.error(f"Create bill failed, out_trade_no: {out_trade_no}")
-        return None, "Create bill failed"
-
-    bill = bill[0]
     if not bill:
         logger.error(f"Bill not found, out_trade_no: {out_trade_no}")
         return None, "Bill not found"
