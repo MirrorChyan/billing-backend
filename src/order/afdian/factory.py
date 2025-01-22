@@ -10,6 +10,12 @@ from .query_afdian import query_order_by_out_trade_no
 
 
 async def process_order(out_trade_no: str) -> Tuple[Any, str]:
+    if not out_trade_no:
+        logger.error(
+            f"out_trade_no is reuqired: {out_trade_no}"
+        )
+        return None, "not an order"
+
     response = await query_order_by_out_trade_no(out_trade_no)
     if not response or response.get("ec") != 200:
         logger.error(
