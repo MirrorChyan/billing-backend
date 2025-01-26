@@ -78,7 +78,6 @@ class Bill(Model):
 class CheckIn(Model):
     cdk = CharField()
     activated_at = DateTimeField()
-    actually_paid = CharField()
     application = CharField()
     module = CharField()
     user_agent = CharField()
