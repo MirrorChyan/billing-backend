@@ -33,7 +33,7 @@ async def check_in(body: dict):
         )
 
     except Exception as e:
-        logger.error(f"check_in failed, cdk: {cdk}, application: {application}")
-        return {"ec": 403, "em": f"check_in failed, cdk: {cdk}, application: {application}"}
+        logger.error(f"check_in failed, cdk: {cdk}, application: {application}, error: {e}")
+        return {"ec": 500, "em": f"check_in failed, cdk: {cdk}, application: {application}, error: {e}"}
 
     return {"ec": 200, "em": "OK"}
