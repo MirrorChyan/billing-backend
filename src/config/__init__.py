@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     afdian_test_out_trade_no: str
 
     cdk_acquire_api: str
+    cdk_renew_api: str
 
     check_in_secret: str
 

@@ -25,7 +25,7 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
     except Exception as e:
         # 如果订单号是正确的，能走到这里说明没收到爱发电的推送
         # 主动去爱发电查一下
-        logger.warning(f"Query bill failed, order_id: {order_id}")
+        logger.warning(f"Query bill failed, order_id: {order_id}, custom_order_id: {custom_order_id}, error: {e}")
         bill, message = await process_order(order_id)
         if not bill:
             logger.error(f"order not found, order_id: {order_id}")
