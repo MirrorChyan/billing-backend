@@ -37,6 +37,10 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         logger.error(f"Plan not found, order_id: {order_id}, error: {e}")
         return {"ec": 500, "msg": "Plan not found"}
 
+    if not bill.cdk:
+        logger.error(f"CDK not found, order_id: {order_id}")
+        return {"ec": 500, "msg": "Unknow error, please contact us!"}
+
     return {
         "ec": 200,
         "msg": "Success",

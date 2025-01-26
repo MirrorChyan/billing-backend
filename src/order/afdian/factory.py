@@ -1,19 +1,18 @@
-from dataclasses import dataclass
 from typing import Tuple, Any
 from loguru import logger
 from datetime import datetime, timedelta
 import json
+import string
 
 from src.database import Bill, Plan
 from src.cdk.acquire_cdk import acquire_cdk
+from src.cdk.renew_cdk import renew_cdk
 from .query_afdian import query_order_by_out_trade_no
 
 
 async def process_order(out_trade_no: str) -> Tuple[Any, str]:
     if not out_trade_no:
-        logger.error(
-            f"out_trade_no is reuqired: {out_trade_no}"
-        )
+        logger.error(f"out_trade_no is reuqired: {out_trade_no}")
         return None, "not an order"
 
     response = await query_order_by_out_trade_no(out_trade_no)
@@ -32,8 +31,19 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
 
     order = order[0]
 
+    remark = order.get("remark", "")
+    renew_bill = None
+    if remark and len(remark) == 24 and all(c in string.hexdigits for c in remark):
+        renew_bill = (
+            Bill.select()
+            .where(Bill.cdk == remark)
+            .order_by(Bill.created_at.desc())
+            .get_or_none()
+        )
+
     now = datetime.now()
     buy_count = order.get("sku_detail", [{}])[0].get("count", 1)
+
     try:
         bill, created = Bill.get_or_create(
             platform="afdian",
@@ -71,11 +81,19 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         logger.error(f"Plan not found, out_trade_no: {out_trade_no}, error: {e}")
         return None, "Plan not found"
 
-    expired = now + timedelta(days=plan.valid_days * buy_count)
-    cdk = await acquire_cdk(expired)
-    if not cdk:
-        logger.error(f"Query CDK failed, out_trade_no: {out_trade_no}")
-        return None, "Query CDK failed"
+    delta = timedelta(days=plan.valid_days * buy_count)
+
+    if renew_bill:
+        cdk = remark
+        if renew_bill.expired_at > now:
+            expired = renew_bill.expired_at + delta
+        else:
+            expired = now + delta
+
+        await renew_cdk(cdk, expired)
+    else:
+        cdk = await acquire_cdk(now + delta)
+        expired = now + delta
 
     try:
         bill = Bill.get(Bill.platform == "afdian", Bill.order_id == out_trade_no)
@@ -85,5 +103,9 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
     except Exception as e:
         logger.error(f"Update bill failed, out_trade_no: {out_trade_no}, error: {e}")
         return None, "Update bill failed"
+
+    if not cdk:
+        logger.error(f"Query CDK failed, out_trade_no: {out_trade_no}")
+        return None, "Query CDK failed"
 
     return bill, "OK"
