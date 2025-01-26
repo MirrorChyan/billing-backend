@@ -7,7 +7,6 @@ from peewee import (
     TextField,
     DateTimeField,
     IntegerField,
-    BooleanField,
 )
 from playhouse.shortcuts import ReconnectMixin
 
@@ -81,7 +80,6 @@ class CheckIn(Model):
     application = CharField()
     module = CharField()
     user_agent = CharField()
-    renew = BooleanField(default=False)
 
     class Meta:
         database = db
