@@ -7,7 +7,7 @@ from peewee import (
     TextField,
     DateTimeField,
     IntegerField,
-    ForeignKeyField,
+    BooleanField,
 )
 from playhouse.shortcuts import ReconnectMixin
 
@@ -67,7 +67,7 @@ class Bill(Model):
     expired_at = DateTimeField()
 
     # from backend
-    cdk = CharField(unique=True)
+    cdk = CharField()
 
     class Meta:
         database = db
@@ -76,11 +76,13 @@ class Bill(Model):
 
 
 class CheckIn(Model):
-    cdk = ForeignKeyField(Bill, field="cdk", backref="check_in", primary_key=True)
+    cdk = CharField()
     activated_at = DateTimeField()
+    actually_paid = CharField()
     application = CharField()
     module = CharField()
     user_agent = CharField()
+    renew = BooleanField(default=False)
 
     class Meta:
         database = db
