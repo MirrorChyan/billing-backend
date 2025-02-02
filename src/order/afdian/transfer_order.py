@@ -30,7 +30,7 @@ async def query_order(_from: str = Query(..., alias="from"), to: str = None):
         logger.error(f"order expired, _from: {_from}")
         return {
             "ec": 403,
-            "msg": "Orders older than 3 day are not allowed to be merged",
+            "msg": "Order older than 3 days",
         }
 
     # 已经转过一次了
