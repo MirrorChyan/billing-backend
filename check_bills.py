@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
+import json
 
 from src.database import Bill, Plan, CheckIn
 
@@ -22,7 +23,16 @@ def monthly_bill(year: int, month: int):
     order_count = 0
     item_count = 0
     bill_amount = 0
+    order_csv = "order_id,plan,buy_count,amount,remark,user_id,created_at,expired_at\n"
     for bill in bills:
+        remark = (
+            json.loads(bill.raw_data)
+            .get("data", {})
+            .get("list", [{}])[0]
+            .get("remark", "")
+        )
+        order_csv += f"{bill.order_id},{plans[bill.plan_id][0]},{bill.buy_count},{bill.actually_paid},{remark},{bill.user_id},{bill.created_at},{bill.expired_at}\n"
+
         if bill.plan_id not in plans:
             print(f"Plan not found: {bill.plan_id}, bill: {bill}")
             continue
@@ -43,6 +53,13 @@ def monthly_bill(year: int, month: int):
     print(
         f"\nTotal: orders: {order_count}, items: {item_count}, amount: {bill_amount:.2f}"
     )
+
+    Path(f"csv/{year}-{month}").mkdir(parents=True, exist_ok=True)
+    with open(
+        f"csv/{year}-{month}/{year}-{month} orders.csv", "w", encoding="utf-8"
+    ) as f:
+        f.write("\ufeff")  # BOM
+        f.write(order_csv)
 
     print("\n==== Checkins ====\n")
 
@@ -72,9 +89,7 @@ def monthly_bill(year: int, month: int):
 
     app_uas = {}
     csvs = {}
-    csv_head = (
-        "order_id,plan,buy_count,amount,user_id,created_at,expired_at,activated_at\n"
-    )
+    csv_head = "order_id,plan,buy_count,amount,remark,user_id,created_at,expired_at,activated_at\n"
 
     invalid_checkins = 0
     for checkin in checkins:
@@ -91,9 +106,15 @@ def monthly_bill(year: int, month: int):
             if bill.cdk == checkin.cdk:
                 count += 1
                 amount += float(bill.actually_paid)
+                remark = (
+                    json.loads(bill.raw_data)
+                    .get("data", {})
+                    .get("list", [{}])[0]
+                    .get("remark", "")
+                )
                 csvs[
                     app_ua
-                ] += f"{bill.order_id},{plan_titles[bill.plan_id]},{bill.buy_count},{bill.actually_paid},{bill.user_id},{bill.created_at},{bill.expired_at},{checkin.activated_at}\n"
+                ] += f"{bill.order_id},{plan_titles[bill.plan_id]},{bill.buy_count},{bill.actually_paid},{remark},{bill.user_id},{bill.created_at},{bill.expired_at},{checkin.activated_at}\n"
 
         if count == 0:
             invalid_checkins += 1
@@ -127,6 +148,7 @@ def monthly_bill(year: int, month: int):
             f.write("\ufeff")  # BOM
             f.write(csv)
         print(f"CSV saved: {year}-{month} {app_ua}.csv")
+
 
 if __name__ == "__main__":
     now = datetime.now()
