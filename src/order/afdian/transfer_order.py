@@ -38,6 +38,10 @@ async def query_order(_from: str = Query(..., alias="from"), to: str = None):
         logger.error(f"order already transferred, _from: {_from}")
         return {"ec": 403, "msg": "Order already transferred"}
 
+    if from_bill.cdk == to_bill.cdk:
+        logger.error(f"CDK is the same, _from: {_from}, to: {to}")
+        return {"ec": 403, "msg": "CDK is same, Order already transferred"}
+
     try:
         from_plan = Plan.get(
             Plan.platform == "afdian", Plan.plan_id == from_bill.plan_id
@@ -49,6 +53,9 @@ async def query_order(_from: str = Query(..., alias="from"), to: str = None):
     from_bill.expired_at = now
     # cdk-backend 那边不允许过去的时间，加个10秒的缓冲
     await renew_cdk(from_bill.cdk, from_bill.expired_at + timedelta(seconds=10))
+
+    # 方便查账，Bill 里搜这个 CDK 能找同时找到两条记录
+    from_bill.cdk = to_bill.cdk
     from_bill.save()
 
     delta = timedelta(days=from_plan.valid_days * from_bill.buy_count)
