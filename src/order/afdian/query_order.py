@@ -41,6 +41,11 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         logger.error(f"CDK not found, order_id: {order_id}")
         return {"ec": 500, "msg": "Unknow error, please contact us!"}
 
+    latest_bill = Bill.select().where(Bill.cdk == bill.cdk).order_by(Bill.expired_at.desc()).get_or_none()
+    if not latest_bill:
+        logger.error(f"CDK not found, order_id: {order_id}")
+        return {"ec": 500, "msg": "Unknow error, please contact us!"}
+
     return {
         "ec": 200,
         "msg": "Success",
@@ -48,9 +53,10 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
             "platform": bill.platform,
             "order_id": bill.order_id,
             "plan_id": bill.plan_id,
+            "buy_count": bill.buy_count,
             "user_id": bill.user_id,
             "created_at": bill.created_at,
-            "expired_at": bill.expired_at,
+            "expired_at": latest_bill.expired_at,
             "cdk": bill.cdk,
             "plan": {
                 "title": plan.title,

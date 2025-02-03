@@ -37,7 +37,7 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
         renew_bill = (
             Bill.select()
             .where(Bill.cdk == remark)
-            .order_by(Bill.created_at.desc())
+            .order_by(Bill.expired_at.desc())
             .get_or_none()
         )
 
