@@ -24,6 +24,7 @@ def monthly_bill(year: int, month: int):
     item_count = 0
     bill_amount = 0
     order_csv = "order_id,plan,buy_count,amount,remark,user_id,created_at,expired_at\n"
+    remark_csv = order_csv
     for bill in bills:
         remark = (
             json.loads(bill.raw_data)
@@ -31,7 +32,10 @@ def monthly_bill(year: int, month: int):
             .get("list", [{}])[0]
             .get("remark", "")
         )
-        order_csv += f"{bill.order_id},{plans[bill.plan_id][0]},{bill.buy_count},{bill.actually_paid},{remark},{bill.user_id},{bill.created_at},{bill.expired_at}\n"
+        csv_line = f"{bill.order_id},{plans[bill.plan_id][0]},{bill.buy_count},{bill.actually_paid},{remark},{bill.user_id},{bill.created_at},{bill.expired_at}\n"
+        order_csv += csv_line
+        if remark:
+            remark_csv += csv_line
 
         if bill.plan_id not in plans:
             print(f"Plan not found: {bill.plan_id}, bill: {bill}")
@@ -60,6 +64,14 @@ def monthly_bill(year: int, month: int):
     ) as f:
         f.write("\ufeff")  # BOM
         f.write(order_csv)
+    print(f"CSV saved: {year}-{month} orders.csv")
+
+    with open(
+        f"csv/{year}-{month}/{year}-{month} remarks.csv", "w", encoding="utf-8"
+    ) as f:
+        f.write("\ufeff")  # BOM
+        f.write(remark_csv)
+    print(f"CSV saved: {year}-{month} remarks.csv")
 
     print("\n==== Checkins ====\n")
 
