@@ -16,7 +16,7 @@ def monthly_bill(year: int, month: int):
     all_plans = Plan.select().order_by(Plan.valid_days)
     plans = {}
     for plan in all_plans:
-        plans[plan.plan_id] = (plan.title, 0, 0) # name, order, item
+        plans[plan.plan_id] = (plan.title, 0, 0)  # name, order, item
 
     order_count = 0
     item_count = 0
@@ -39,7 +39,9 @@ def monthly_bill(year: int, month: int):
     for plan_id, (name, order, item) in plans.items():
         print(f"{name}: {order} orders, {item} items")
 
-    print(f"\nTotal: orders: {order_count}, items: {item_count}, amount: {bill_amount:.2f}")
+    print(
+        f"\nTotal: orders: {order_count}, items: {item_count}, amount: {bill_amount:.2f}"
+    )
 
     print("\n==== Checkins ====\n")
 
@@ -50,9 +52,14 @@ def monthly_bill(year: int, month: int):
         CheckIn.activated_at.month == month,
     )
 
-    # 有可能订单在上个月，但是激活在这个月
+    # 有可能订单是以前的，但是激活是在这个月的
+    if month == 12:
+        next_month = datetime(year + 1, 1, 1)
+    else:
+        next_month = datetime(year, month + 1, 1)
+
     bills = Bill.select().where(
-        Bill.created_at < datetime(year, month, 1) + timedelta(days=31),
+        Bill.created_at < next_month,
     )
 
     invalid_checkins = 0
@@ -61,7 +68,7 @@ def monthly_bill(year: int, month: int):
         ua = checkin.user_agent
         app_ua = f"{app} - {ua}"
         if app_ua not in app_uas:
-            app_uas[app_ua] = (0, 0) # count, amount
+            app_uas[app_ua] = (0, 0)  # count, amount
 
         count = 0
         amount = 0
@@ -90,9 +97,21 @@ def monthly_bill(year: int, month: int):
 
     not_checkin_count = order_count - checkin_count
     not_checkin_amount = bill_amount - checkin_amount
-    print(f"\nOrders not checkin: {not_checkin_count}, amount: {not_checkin_amount:.2f}")
-
+    print(
+        f"\nOrders not checkin: {not_checkin_count}, amount: {not_checkin_amount:.2f}"
+    )
 
 
 if __name__ == "__main__":
-    monthly_bill(datetime.now().year, datetime.now().month)
+    now = datetime.now()
+
+    def pre_month(now):
+        year = now.year
+        month = now.month - 1
+        if month == 0:
+            year -= 1
+            month = 12
+        return year, month
+
+    # monthly_bill(*pre_month(now))
+    monthly_bill(now.year, now.month)
