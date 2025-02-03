@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from src.database import Bill, Plan, CheckIn
 
@@ -45,8 +46,6 @@ def monthly_bill(year: int, month: int):
 
     print("\n==== Checkins ====\n")
 
-    app_uas = {}
-
     checkins = CheckIn.select().where(
         CheckIn.activated_at.year == year,
         CheckIn.activated_at.month == month,
@@ -58,8 +57,23 @@ def monthly_bill(year: int, month: int):
     else:
         next_month = datetime(year, month + 1, 1)
 
+    # 但也别太久远了，最多三个月前
+    if month <= 3:
+        prev_month = datetime(year - 1, 12 + month - 3, 1)
+    else:
+        prev_month = datetime(year, month - 3, 1)
+
+    plan_titles = {plan.plan_id: plan.title for plan in all_plans}
+
     bills = Bill.select().where(
         Bill.created_at < next_month,
+        Bill.created_at >= prev_month,
+    )
+
+    app_uas = {}
+    csvs = {}
+    csv_head = (
+        "order_id,plan,buy_count,amount,user_id,created_at,expired_at,activated_at\n"
     )
 
     invalid_checkins = 0
@@ -69,6 +83,7 @@ def monthly_bill(year: int, month: int):
         app_ua = f"{app} - {ua}"
         if app_ua not in app_uas:
             app_uas[app_ua] = (0, 0)  # count, amount
+            csvs[app_ua] = csv_head
 
         count = 0
         amount = 0
@@ -76,6 +91,9 @@ def monthly_bill(year: int, month: int):
             if bill.cdk == checkin.cdk:
                 count += 1
                 amount += float(bill.actually_paid)
+                csvs[
+                    app_ua
+                ] += f"{bill.order_id},{plan_titles[bill.plan_id]},{bill.buy_count},{bill.actually_paid},{bill.user_id},{bill.created_at},{bill.expired_at},{checkin.activated_at}\n"
 
         if count == 0:
             invalid_checkins += 1
@@ -98,9 +116,17 @@ def monthly_bill(year: int, month: int):
     not_checkin_count = order_count - checkin_count
     not_checkin_amount = bill_amount - checkin_amount
     print(
-        f"\nOrders not checkin: {not_checkin_count}, amount: {not_checkin_amount:.2f}"
+        f"\nOrders not checkin: {not_checkin_count}, amount: {not_checkin_amount:.2f}\n"
     )
 
+    Path(f"csv/{year}-{month}").mkdir(parents=True, exist_ok=True)
+    for app_ua, csv in csvs.items():
+        with open(
+            f"csv/{year}-{month}/{year}-{month} {app_ua}.csv", "w", encoding="utf-8"
+        ) as f:
+            f.write("\ufeff")  # BOM
+            f.write(csv)
+        print(f"CSV saved: {year}-{month} {app_ua}.csv")
 
 if __name__ == "__main__":
     now = datetime.now()
