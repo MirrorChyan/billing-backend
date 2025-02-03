@@ -5,6 +5,11 @@ import json
 from src.database import Bill, Plan, CheckIn
 
 
+def secure_str(s: str) -> str:
+    half = len(s) // 2
+    return s[:half] + "*" * (len(s) - half)
+
+
 def monthly_bill(year: int, month: int):
     print(f"Checking {year}-{month} bills...")
 
@@ -32,7 +37,7 @@ def monthly_bill(year: int, month: int):
             .get("list", [{}])[0]
             .get("remark", "")
         )
-        csv_line = f"{bill.order_id},{plans[bill.plan_id][0]},{bill.buy_count},{bill.actually_paid},{remark},{bill.user_id},{bill.created_at},{bill.expired_at}\n"
+        csv_line = f"{secure_str(bill.order_id)},{plans[bill.plan_id][0]},{bill.buy_count},{bill.actually_paid},{remark},{secure_str(bill.user_id)},{bill.created_at},{bill.expired_at}\n"
         order_csv += csv_line
         if remark:
             remark_csv += csv_line
@@ -126,7 +131,7 @@ def monthly_bill(year: int, month: int):
                 )
                 csvs[
                     app_ua
-                ] += f"{bill.order_id},{plan_titles[bill.plan_id]},{bill.buy_count},{bill.actually_paid},{remark},{bill.user_id},{bill.created_at},{bill.expired_at},{checkin.activated_at}\n"
+                ] += f"{secure_str(bill.order_id)},{plan_titles[bill.plan_id]},{bill.buy_count},{bill.actually_paid},{remark},{secure_str(bill.user_id)},{bill.created_at},{bill.expired_at},{checkin.activated_at}\n"
 
         if count == 0:
             invalid_checkins += 1
