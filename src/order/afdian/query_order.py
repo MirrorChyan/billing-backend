@@ -18,18 +18,22 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
     if order_id:
         bill = Bill.get_or_none(Bill.platform == "afdian", Bill.order_id == order_id)
     elif custom_order_id:
-        bill = Bill.get_or_none(Bill.platform == "afdian", Bill.custom_order_id == custom_order_id)
+        bill = Bill.get_or_none(
+            Bill.platform == "afdian", Bill.custom_order_id == custom_order_id
+        )
     else:
         return {"ec": 400, "msg": "order_id is required"}
-    
+
     if not bill:
         # 如果订单号是正确的，能走到这里说明没收到爱发电的推送
         # 主动去爱发电查一下
-        logger.warning(f"Bill not found, order_id: {order_id}, custom_order_id: {custom_order_id}")
+        logger.warning(
+            f"Bill not found, order_id: {order_id}, custom_order_id: {custom_order_id}"
+        )
         bill, message = await process_order(order_id)
         if not bill:
             logger.error(f"order not found, order_id: {order_id}")
-            return { "ec": 400, "msg": message }
+            return {"ec": 400, "msg": message}
 
     try:
         plan = Plan.get(Plan.platform == "afdian", Plan.plan_id == bill.plan_id)
@@ -41,7 +45,12 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         logger.error(f"CDK not found, order_id: {order_id}")
         return {"ec": 500, "msg": "Unknow error, please contact us!"}
 
-    latest_bill = Bill.select().where(Bill.cdk == bill.cdk).order_by(Bill.expired_at.desc()).get_or_none()
+    latest_bill = (
+        Bill.select()
+        .where(Bill.cdk == bill.cdk)
+        .order_by(Bill.expired_at.desc())
+        .get_or_none()
+    )
     if not latest_bill:
         logger.error(f"CDK not found, order_id: {order_id}")
         return {"ec": 500, "msg": "Unknow error, please contact us!"}
