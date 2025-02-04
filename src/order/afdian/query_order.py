@@ -24,7 +24,10 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
     else:
         return {"ec": 400, "msg": "order_id is required"}
 
-    if not bill and order_id:
+    if not bill:
+        if not order_id:
+            return {"ec": 400, "msg": "Order not found"}
+
         # 如果订单号是正确的，能走到这里说明没收到爱发电的推送
         # 主动去爱发电查一下
         # logger.warning(
