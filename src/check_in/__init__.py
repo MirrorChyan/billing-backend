@@ -24,12 +24,14 @@ async def check_in(body: dict):
     user_agent = body.get("user_agent", "")
 
     try:
-        CheckIn.create(
+        checkin, created = CheckIn.get_or_create(
             cdk=cdk,
-            activated_at=now,
-            application=application,
-            module=module,
-            user_agent=user_agent,
+            defaults={
+                "activated_at": now,
+                "application": application,
+                "module": module,
+                "user_agent": user_agent,
+            },
         )
 
     except Exception as e:
@@ -40,5 +42,10 @@ async def check_in(body: dict):
             "ec": 500,
             "em": f"check_in failed, cdk: {cdk}, application: {application}, error: {e}",
         }
+
+    if created:
+        logger.info(
+            f"check_in success, cdk: {cdk}, application: {application}, module: {module}, user_agent: {user_agent}"
+        )
 
     return {"ec": 200, "em": "OK"}
