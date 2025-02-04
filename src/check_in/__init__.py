@@ -20,7 +20,7 @@ async def check_in(body: dict):
 
     now = datetime.now()
 
-    module = body.get("module", "") 
+    module = body.get("module", "")
     user_agent = body.get("user_agent", "")
 
     try:
@@ -29,11 +29,16 @@ async def check_in(body: dict):
             activated_at=now,
             application=application,
             module=module,
-            user_agent=user_agent
+            user_agent=user_agent,
         )
 
     except Exception as e:
-        logger.error(f"check_in failed, cdk: {cdk}, application: {application}, error: {e}")
-        return {"ec": 500, "em": f"check_in failed, cdk: {cdk}, application: {application}, error: {e}"}
+        logger.error(
+            f"check_in failed, cdk: {cdk}, application: {application}, error: {e}"
+        )
+        return {
+            "ec": 500,
+            "em": f"check_in failed, cdk: {cdk}, application: {application}, error: {e}",
+        }
 
     return {"ec": 200, "em": "OK"}
