@@ -108,4 +108,5 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
         logger.error(f"Query CDK failed, out_trade_no: {out_trade_no}")
         return None, "Query CDK failed"
 
+    logger.success(f"Process order success, out_trade_no: {out_trade_no}")
     return bill, "OK"

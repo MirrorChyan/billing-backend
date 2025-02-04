@@ -44,7 +44,7 @@ async def check_in(body: dict):
         }
 
     if created:
-        logger.info(
+        logger.success(
             f"check_in success, cdk: {cdk}, application: {application}, module: {module}, user_agent: {user_agent}"
         )
 

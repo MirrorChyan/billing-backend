@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/order/afdian")
 async def query_order(order_id: str = None, custom_order_id: str = None):
-    logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
+    # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
 
     if not order_id and not custom_order_id:
         logger.error(f"order_id and custom_order_id is None")

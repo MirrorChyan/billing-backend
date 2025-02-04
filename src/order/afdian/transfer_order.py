@@ -68,4 +68,5 @@ async def query_order(_from: str = Query(..., alias="from"), to: str = None):
     await renew_cdk(to_bill.cdk, to_bill.expired_at)
     to_bill.save()
 
+    logger.success(f"order transferred, _from: {_from}, to: {to}")
     return {"ec": 200, "msg": "Success"}
