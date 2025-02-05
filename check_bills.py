@@ -21,9 +21,10 @@ def monthly_bill(year: int, month: int):
     print("\n==== Orders ====\n")
 
     all_plans = Plan.select().order_by(Plan.valid_days)
+    daily_amount = [0] * 32
     plans = {}
     for plan in all_plans:
-        plans[plan.plan_id] = (plan.title, 0, 0)  # name, order, item
+        plans[plan.plan_id] = (plan.title, 0, 0, 0)  # name, order, item, amount
 
     order_count = 0
     item_count = 0
@@ -42,6 +43,9 @@ def monthly_bill(year: int, month: int):
         if remark:
             remark_csv += csv_line
 
+        day = bill.created_at.day
+        daily_amount[day] += float(bill.actually_paid)
+
         if bill.plan_id not in plans:
             print(f"Plan not found: {bill.plan_id}, bill: {bill}")
             continue
@@ -50,14 +54,22 @@ def monthly_bill(year: int, month: int):
             plans[bill.plan_id][0],
             plans[bill.plan_id][1] + 1,
             plans[bill.plan_id][2] + bill.buy_count,
+            plans[bill.plan_id][3] + float(bill.actually_paid),
         )
 
         order_count += 1
         item_count += bill.buy_count
         bill_amount += float(bill.actually_paid)
 
-    for plan_id, (name, order, item) in plans.items():
-        print(f"{name}: {order} orders, {item} items")
+    print("Daily amount:")
+    for day, amount in enumerate(daily_amount):
+        if day == 0 or amount == 0:
+            continue
+        print(f"{year}-{month}-{day}: {amount:.2f}")
+
+    print("\nPlans:")
+    for plan_id, (name, order, item, amount) in plans.items():
+        print(f"{name}: {order} orders, {item} items, amount: {amount:.2f}")
 
     print(
         f"\nTotal: orders: {order_count}, items: {item_count}, amount: {bill_amount:.2f}"
@@ -69,14 +81,12 @@ def monthly_bill(year: int, month: int):
     ) as f:
         f.write("\ufeff")  # BOM
         f.write(order_csv)
-    print(f"CSV saved: {year}-{month} orders.csv")
 
     with open(
         f"csv/{year}-{month}/{year}-{month} remarks.csv", "w", encoding="utf-8"
     ) as f:
         f.write("\ufeff")  # BOM
         f.write(remark_csv)
-    print(f"CSV saved: {year}-{month} remarks.csv")
 
     print("\n==== Checkins ====\n")
 
@@ -164,7 +174,8 @@ def monthly_bill(year: int, month: int):
         ) as f:
             f.write("\ufeff")  # BOM
             f.write(csv)
-        print(f"CSV saved: {year}-{month} {app_ua}.csv")
+
+    print(f"CSV saved to \"csv/{year}-{month}/\"")
 
 
 if __name__ == "__main__":
