@@ -165,5 +165,10 @@ cython_debug/
 # pdm
 .pdm-python
 
-# data
+# csv
 csv/
+*.csv
+xslx/
+*.xslx
+xsl/
+*.xsl
