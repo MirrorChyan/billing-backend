@@ -86,6 +86,39 @@ class CheckIn(Model):
         table_name = "checkin"
 
 
+class Transaction(Model):
+    from_platform = CharField()
+    from_order_id = CharField()
+    to_platform = CharField()
+    to_order_id = CharField()
+
+    transfered_at = DateTimeField()
+    daysdelta = IntegerField()
+    new_expired_at = DateTimeField()
+
+    class Meta:
+        database = db
+        table_name = "transaction"
+
+
+class Reward(Model):
+    reward_id = CharField(primary_key=True)
+
+    title = TextField()
+    valid_days = IntegerField()
+    applications = TextField()
+    modules = TextField()
+    expired_at = DateTimeField()
+
+    remaining = IntegerField()
+
+    class Meta:
+        database = db
+        table_name = "reward"
+
+
 Plan.create_table()
 Bill.create_table()
 CheckIn.create_table()
+Transaction.create_table()
+Reward.create_table()

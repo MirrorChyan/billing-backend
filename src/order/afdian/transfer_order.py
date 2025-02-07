@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query
 from datetime import datetime, timedelta
 
 from src.cdk.renew_cdk import renew_cdk
-from src.database import Bill, Plan
+from src.database import Bill, Plan, Transaction, Reward
 
 router = APIRouter()
 
@@ -68,5 +68,17 @@ async def query_order(_from: str = Query(..., alias="from"), to: str = None):
     await renew_cdk(to_bill.cdk, to_bill.expired_at)
     to_bill.save()
 
-    logger.success(f"order transferred, _from: {_from}, to: {to}")
+    Transaction.create(
+        from_platform="afdian",
+        from_order_id=_from,
+        to_platform="afdian",
+        to_order_id=to,
+        transfered_at=now,
+        daysdelta=delta.days,
+        new_expired_at=to_bill.expired_at,
+    )
+
+    logger.success(
+        f"order transferred, _from: {_from}, to: {to}, delta: {delta}, new_expired_at: {to_bill.expired_at}"
+    )
     return {"ec": 200, "msg": "Success"}
