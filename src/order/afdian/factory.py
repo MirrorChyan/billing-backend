@@ -31,7 +31,7 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
 
     order = order[0]
 
-    remark = order.get("remark", "")
+    remark = None # order.get("remark", "")
     renew_bill = None
     if remark and len(remark) == 24 and all(c in string.hexdigits for c in remark):
         renew_bill = (
