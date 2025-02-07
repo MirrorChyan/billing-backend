@@ -120,13 +120,16 @@ async def get_reward(_from: str, to_bill):
             "ec": 403,
             "msg": "Reward remaining <= 0",
         }
+    
+    if to_bill.expired_at < now:
+        logger.error(f"order expired, to: {to_bill.order_id}")
+        return {
+            "ec": 403,
+            "msg": "Order expired",
+        }
 
     delta = timedelta(days=reward.valid_days)
-
-    if to_bill.expired_at > now:
-        new_expired_at = to_bill.expired_at + delta
-    else:
-        new_expired_at = now + delta
+    new_expired_at = to_bill.expired_at + delta
 
     _, created = Transaction.get_or_create(
         from_platform="reward",
