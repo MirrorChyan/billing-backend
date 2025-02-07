@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/order/afdian")
 async def query_order(order_id: str = None, custom_order_id: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
-    if not order_id.isdigit():
+    if order_id and not order_id.isdigit():
         reward = query_reward(order_id)
         if reward:
             return reward
