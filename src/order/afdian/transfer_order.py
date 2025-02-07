@@ -122,24 +122,31 @@ async def get_reward(_from: str, to_bill):
         }
 
     delta = timedelta(days=reward.valid_days)
+
     if to_bill.expired_at > now:
-        to_bill.expired_at = to_bill.expired_at + delta
+        new_expired_at = to_bill.expired_at + delta
     else:
-        to_bill.expired_at = now + delta
+        new_expired_at = now + delta
 
-    await renew_cdk(to_bill.cdk, to_bill.expired_at)
-    to_bill.save()
-
-    Transaction.create(
+    _, created = Transaction.get_or_create(
         from_platform="reward",
         from_order_id=_from,
         to_platform="afdian",
         to_order_id=to_bill.order_id,
-        transfered_at=now,
-        daysdelta=delta.days,
-        new_expired_at=to_bill.expired_at,
-        why="/order/afdian/transfer/reward",
+        defaults={
+            "transfered_at": now,
+            "daysdelta": delta.days,
+            "new_expired_at": new_expired_at,
+            "why": "/order/afdian/transfer/reward",
+        },
     )
+    if not created:
+        logger.error(f"reward already given, _from: {_from}, to: {to_bill.order_id}")
+        return {"ec": 403, "msg": "Reward already given"}
+
+    to_bill.expired_at = new_expired_at
+    await renew_cdk(to_bill.cdk, to_bill.expired_at)
+    to_bill.save()
 
     reward.remaining -= 1
     reward.save()
