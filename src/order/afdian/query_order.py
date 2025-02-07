@@ -10,6 +10,10 @@ router = APIRouter()
 @router.get("/order/afdian")
 async def query_order(order_id: str = None, custom_order_id: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
+    if not order_id.isdigit():
+        reward = query_reward(order_id)
+        if reward:
+            return reward
 
     if not order_id and not custom_order_id:
         logger.error(f"order_id and custom_order_id is None")
@@ -35,10 +39,6 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         # )
         bill, message = await process_order(order_id)
         if not bill:
-            reward = query_reward(order_id)
-            if reward:
-                return reward
-
             # logger.error(f"order not found, order_id: {order_id}")
             return {"ec": 400, "msg": message}
 
@@ -85,8 +85,8 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
     }
 
 
-def query_reward(order_id: str):
-    reward = Reward.get_or_none(Reward.order_id == order_id)
+def query_reward(reward_key: str):
+    reward = Reward.get_or_none(Reward.reward_key == reward_key)
     if not reward:
         return None
 
@@ -95,7 +95,8 @@ def query_reward(order_id: str):
         "msg": "Success",
         "data": {
             "cdk": "",  # for compatibility with order
-            "reward_id": reward.reward_id,
+            "created_at": reward.start_at,  # for compatibility with order
+            "reward_key": reward.reward_key,
             "start_at": reward.start_at,
             "expired_at": reward.expired_at,
             "title": reward.title,

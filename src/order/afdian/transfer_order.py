@@ -9,18 +9,27 @@ router = APIRouter()
 
 
 @router.get("/order/afdian/transfer")
-async def query_order(_from: str = Query(..., alias="from"), to: str = None):
+async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
     logger.debug(f"_from: {_from}, to: {to}")
 
     if not _from or not to:
         logger.error(f"_from or to is None")
         return {"ec": 400, "msg": "from and to is required"}
 
-    from_bill = Bill.get_or_none(Bill.platform == "afdian", Bill.order_id == _from)
     to_bill = Bill.get_or_none(Bill.platform == "afdian", Bill.order_id == to)
 
-    if not from_bill or not to_bill:
-        logger.error(f"order not found, _from: {_from}, to: {to}")
+    if not to_bill:
+        logger.error(f"order not found, to: {to}")
+        return {"ec": 400, "msg": "Order not found"}
+
+    if not _from.isdigit():
+        reward = await get_reward(_from, to_bill)
+        if reward:
+            return reward
+
+    from_bill = Bill.get_or_none(Bill.platform == "afdian", Bill.order_id == _from)
+    if not from_bill:
+        logger.error(f"order not found, _from: {_from}")
         return {"ec": 400, "msg": "Order not found"}
 
     now = datetime.now()
@@ -76,9 +85,66 @@ async def query_order(_from: str = Query(..., alias="from"), to: str = None):
         transfered_at=now,
         daysdelta=delta.days,
         new_expired_at=to_bill.expired_at,
+        why="/order/afdian/transfer/other_order",
     )
 
     logger.success(
         f"order transferred, _from: {_from}, to: {to}, delta: {delta}, new_expired_at: {to_bill.expired_at}"
+    )
+    return {"ec": 200, "msg": "Success"}
+
+
+async def get_reward(_from: str, to_bill):
+    reward = Reward.get_or_none(Reward.reward_key == _from)
+    if not reward:
+        return None
+
+    now = datetime.now()
+    if reward.expired_at < now:
+        logger.error(f"reward expired, _from: {_from}")
+        return {
+            "ec": 403,
+            "msg": "Reward expired",
+        }
+
+    if reward.start_at > now:
+        logger.error(f"reward not started, _from: {_from}")
+        return {
+            "ec": 403,
+            "msg": "Reward not started",
+        }
+
+    if reward.remaining <= 0:
+        logger.error(f"reward remaining <= 0, _from: {_from}")
+        return {
+            "ec": 403,
+            "msg": "Reward remaining <= 0",
+        }
+
+    delta = timedelta(days=reward.valid_days)
+    if to_bill.expired_at > now:
+        to_bill.expired_at = to_bill.expired_at + delta
+    else:
+        to_bill.expired_at = now + delta
+
+    await renew_cdk(to_bill.cdk, to_bill.expired_at)
+    to_bill.save()
+
+    Transaction.create(
+        from_platform="reward",
+        from_order_id=_from,
+        to_platform="afdian",
+        to_order_id=to_bill.order_id,
+        transfered_at=now,
+        daysdelta=delta.days,
+        new_expired_at=to_bill.expired_at,
+        why="/order/afdian/transfer/reward",
+    )
+
+    reward.remaining -= 1
+    reward.save()
+
+    logger.success(
+        f"reward transferred, _from: {_from}, to: {to_bill.order_id}, delta: {delta}, new_expired_at: {to_bill.expired_at}"
     )
     return {"ec": 200, "msg": "Success"}

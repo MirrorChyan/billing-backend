@@ -96,13 +96,15 @@ class Transaction(Model):
     daysdelta = IntegerField()
     new_expired_at = DateTimeField()
 
+    why = CharField()
+
     class Meta:
         database = db
         table_name = "transaction"
 
 
 class Reward(Model):
-    reward_id = CharField(primary_key=True)
+    reward_key = CharField()
 
     title = TextField()
     valid_days = IntegerField()
