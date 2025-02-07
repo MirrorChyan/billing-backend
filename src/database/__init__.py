@@ -108,6 +108,8 @@ class Reward(Model):
     valid_days = IntegerField()
     applications = TextField()
     modules = TextField()
+
+    start_at = DateTimeField()
     expired_at = DateTimeField()
 
     remaining = IntegerField()
