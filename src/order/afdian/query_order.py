@@ -96,7 +96,6 @@ def query_reward(reward_key: str):
         "msg": "Success",
         "data": {
             "cdk": "",  # for compatibility with order
-            "created_at": datetime.now(),  # for compatibility with order
             "reward_key": reward.reward_key,
             "start_at": reward.start_at,
             "expired_at": reward.expired_at,
