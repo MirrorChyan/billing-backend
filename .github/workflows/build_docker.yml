@@ -1,17 +1,10 @@
 name: Build docker
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - "main"
-      - "ci/**"
-    paths:
-      - ".github/workflows/build_docker.yml"
-      - "Dockerfile"
-      - "requirements.txt"
-      - "src/**"
-      - "**.py"
+    tags:
+      - '*'
+  workflow_dispatch:
 
 jobs:
   build:
