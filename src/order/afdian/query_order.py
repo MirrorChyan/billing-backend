@@ -1,5 +1,6 @@
 from loguru import logger
 from fastapi import APIRouter
+from datetime import datetime
 
 from src.database import Bill, Plan, Reward
 from .factory import process_order
@@ -95,7 +96,7 @@ def query_reward(reward_key: str):
         "msg": "Success",
         "data": {
             "cdk": "",  # for compatibility with order
-            "created_at": reward.start_at,  # for compatibility with order
+            "created_at": datetime.now(),  # for compatibility with order
             "reward_key": reward.reward_key,
             "start_at": reward.start_at,
             "expired_at": reward.expired_at,
