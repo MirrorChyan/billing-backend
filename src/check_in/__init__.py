@@ -12,16 +12,32 @@ router = APIRouter()
 @router.post("/check_in/" + settings.check_in_secret)
 async def check_in(body: dict):
     logger.debug(f"body: {body}")
-    cdk = body.get("cdk", "")
-    application = body.get("application", "")
-    if not cdk or not application:
-        logger.error(f"no cdk or application field")
-        return {"ec": 400, "em": "no cdk or application field"}
 
     now = datetime.now()
 
-    module = body.get("module", "")
-    user_agent = body.get("user_agent", "")
+    ret = True
+    if "list" in body:
+        for item in body["list"]:
+            ret &= check_in_single(item, now)
+
+    else:
+        ret = check_in_single(body, now)
+
+    if not ret:
+        return {"ec": 500, "em": f"some failed to checkin, body: {body}"}
+
+    return {"ec": 200, "em": "OK"}
+
+
+def check_in_single(item, now) -> bool:
+    cdk = item.get("cdk", "")
+    application = item.get("application", "")
+    if not cdk or not application:
+        logger.error(f"no cdk or application field")
+        return False
+
+    module = item.get("module", "")
+    user_agent = item.get("user_agent", "")
 
     try:
         checkin, created = CheckIn.get_or_create(
@@ -33,19 +49,15 @@ async def check_in(body: dict):
                 "user_agent": user_agent,
             },
         )
-
     except Exception as e:
         logger.error(
             f"check_in failed, cdk: {cdk}, application: {application}, error: {e}"
         )
-        return {
-            "ec": 500,
-            "em": f"check_in failed, cdk: {cdk}, application: {application}, error: {e}",
-        }
+        return False
 
     if created:
         logger.success(
             f"check_in success, cdk: {cdk}, application: {application}, module: {module}, user_agent: {user_agent}"
         )
 
-    return {"ec": 200, "em": "OK"}
+    return True
