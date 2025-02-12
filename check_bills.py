@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 import json
+import matplotlib.pyplot as plt
 
 from src.database import Bill, Plan, CheckIn
 
@@ -22,6 +23,7 @@ def monthly_bill(year: int, month: int):
 
     all_plans = Plan.select().order_by(Plan.valid_days)
     daily_amount = [0] * 32
+    hourly_amount = [0] * 24 * 32
     plans = {}
     for plan in all_plans:
         plans[plan.plan_id] = (plan.title, 0, 0, 0)  # name, order, item, amount
@@ -45,6 +47,7 @@ def monthly_bill(year: int, month: int):
 
         day = bill.created_at.day
         daily_amount[day] += float(bill.actually_paid)
+        hourly_amount[day * 24 + bill.created_at.hour] += float(bill.actually_paid)
 
         if bill.plan_id not in plans:
             print(f"Plan not found: {bill.plan_id}, bill: {bill}")
@@ -62,10 +65,41 @@ def monthly_bill(year: int, month: int):
         bill_amount += float(bill.actually_paid)
 
     print("Daily amount:")
+    daily_amount = daily_amount[1:]
     for day, amount in enumerate(daily_amount):
-        if day == 0 or amount == 0:
+        if amount == 0:
             continue
         print(f"{year}-{month}-{day}: {amount:.2f}")
+
+    hourly_amount = hourly_amount[24:]
+    days = len(daily_amount) - 1
+
+    plt.plot(hourly_amount)
+    plt.title(f"{year}-{month} daily amount")
+    plt.xlabel("Day")
+    plt.ylabel("Amount")
+    plt.xticks(range(0, 24 * days, 24), range(1, days + 1))
+
+    # 把 daily_amount 打上去
+    for day, amount in enumerate(daily_amount):
+        if amount == 0:
+            continue
+        plt.text(
+            day * 24 + 12,
+            amount / 24,
+            f"{amount:.2f}",
+            ha="center",
+            va="bottom",
+            fontdict={"fontsize": 16},
+        )
+
+    plt.gcf().set_size_inches(50, 10)
+
+    Path(f"csv/{year}-{month}").mkdir(parents=True, exist_ok=True)
+    png = Path(f"csv/{year}-{month}/daily_amount.png")
+    png.unlink(missing_ok=True)
+    plt.savefig(png)
+    plt.close()
 
     print("\nPlans:")
     for plan_id, (name, order, item, amount) in plans.items():
@@ -175,7 +209,7 @@ def monthly_bill(year: int, month: int):
             f.write("\ufeff")  # BOM
             f.write(csv)
 
-    print(f"CSV saved to \"csv/{year}-{month}/\"")
+    print(f'CSV saved to "csv/{year}-{month}/"')
 
 
 if __name__ == "__main__":
