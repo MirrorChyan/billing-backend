@@ -78,7 +78,7 @@ def monthly_bill(year: int, month: int):
     plt.title(f"{year}-{month} daily amount")
     plt.xlabel("Day")
     plt.ylabel("Amount")
-    plt.xticks(range(0, 24 * days, 24), range(1, days + 1))
+    plt.xticks(range(0, 24 * days, 24), [f"{month}-{day}" for day in range(1, days + 1)])
 
     # 把 daily_amount 打上去
     for day, amount in enumerate(daily_amount):
