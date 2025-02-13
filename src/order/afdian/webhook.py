@@ -12,11 +12,11 @@ async def afdian_webhook(webhook_body: dict):
     logger.debug(f"webhook_body: {webhook_body}")
 
     out_trade_no = webhook_body.get("data", {}).get("order", {}).get("out_trade_no")
-    if settings.afdian_test_out_trade_no:
+    if out_trade_no == settings.afdian_test_out_trade_no:
         logger.warning(
-            f"AFDIAN_TEST_OUT_TRADE_NO is set, using it for testing: {settings.afdian_test_out_trade_no}"
+            f"Test order, out_trade_no: {out_trade_no}, webhook_body: {webhook_body}"
         )
-        out_trade_no = settings.afdian_test_out_trade_no
+        return {"ec": 200, "em": "Test success"}
 
     logger.info(f"out_trade_no: {out_trade_no}")
     if not out_trade_no:
