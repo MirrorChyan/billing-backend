@@ -12,16 +12,17 @@ async def afdian_webhook(webhook_body: dict):
     logger.debug(f"webhook_body: {webhook_body}")
 
     out_trade_no = webhook_body.get("data", {}).get("order", {}).get("out_trade_no")
+    logger.info(f"out_trade_no: {out_trade_no}")
+
+    if not out_trade_no:
+        logger.error("Invalid out_trade_no")
+        return {"ec": 400, "em": "Invalid out_trade_no"}
+
     if out_trade_no == settings.afdian_test_out_trade_no:
         logger.warning(
             f"Test order, out_trade_no: {out_trade_no}, webhook_body: {webhook_body}"
         )
         return {"ec": 200, "em": "Test success"}
-
-    logger.info(f"out_trade_no: {out_trade_no}")
-    if not out_trade_no:
-        logger.error("Invalid out_trade_no")
-        return {"ec": 400, "em": "Invalid out_trade_no"}
 
     success, message = await process_order(out_trade_no)
     if not success:
