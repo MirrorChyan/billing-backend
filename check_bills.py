@@ -69,9 +69,13 @@ def monthly_bill(year: int, month: int):
     for day, amount in enumerate(daily_amount):
         if amount == 0:
             continue
-        print(f"{year}-{month}-{day}: {amount:.2f}")
+        print(f"{year}-{month}-{day+1}: {amount:.2f}")
 
     hourly_amount = hourly_amount[24:]
+    # 去掉后面的 0
+    while hourly_amount[-1] == 0:
+        hourly_amount.pop()
+    hourly_amount.pop()
     days = len(daily_amount) - 1
 
     plt.plot(hourly_amount)
