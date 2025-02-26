@@ -12,9 +12,7 @@ router = APIRouter()
 async def query_order(order_id: str = None, custom_order_id: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
     if order_id and not order_id.isdigit():
-        reward = query_reward(order_id)
-        if reward:
-            return reward
+        return query_reward(order_id)
 
     if not order_id and not custom_order_id:
         logger.error(f"order_id and custom_order_id is None")
@@ -89,7 +87,7 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
 def query_reward(reward_key: str):
     reward = Reward.get_or_none(Reward.reward_key == reward_key)
     if not reward:
-        return None
+        return {"ec": 400, "msg": "Reward not found"}
 
     return {
         "ec": 200,
