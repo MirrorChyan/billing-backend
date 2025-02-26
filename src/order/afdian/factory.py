@@ -52,7 +52,7 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
                 "custom_order_id": order.get("custom_order_id", ""),
                 "plan_id": order["plan_id"],
                 "user_id": order["user_id"],
-                "created_at": now,
+                "created_at": datetime.fromtimestamp(order["create_time"]),
                 "buy_count": buy_count,
                 "actually_paid": order["total_amount"],
                 "original_price": order["show_amount"],
