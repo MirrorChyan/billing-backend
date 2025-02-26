@@ -115,6 +115,10 @@ class Reward(Model):
     expired_at = DateTimeField()
 
     remaining = IntegerField()
+    received_count = IntegerField()
+
+    order_created_after = DateTimeField()
+    order_created_before = DateTimeField()
 
     class Meta:
         database = db

@@ -128,6 +128,13 @@ async def get_reward(_from: str, to_bill):
             "msg": "Order expired",
         }
 
+    if to_bill.created_at < reward.order_created_after or to_bill.created_at > reward.order_created_before:
+        logger.error(f"The order creation time does not match, to: {to_bill.order_id}")
+        return {
+            "ec": 403,
+            "msg": "Not meeting award requirements",
+        }
+
     delta = timedelta(days=reward.valid_days)
     new_expired_at = to_bill.expired_at + delta
 
@@ -152,6 +159,7 @@ async def get_reward(_from: str, to_bill):
     to_bill.save()
 
     reward.remaining -= 1
+    reward.received_count += 1
     reward.save()
 
     logger.success(

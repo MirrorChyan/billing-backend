@@ -104,5 +104,7 @@ def query_reward(reward_key: str):
             "applications": reward.applications,
             "modules": reward.modules,
             "remaining": reward.remaining,
+            "order_created_after": reward.order_created_after,
+            "order_created_before": reward.order_created_before,
         },
     }
