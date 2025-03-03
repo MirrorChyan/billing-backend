@@ -126,6 +126,8 @@ def monthly_bill(year: int, month: int):
         f.write("\ufeff")  # BOM
         f.write(remark_csv)
 
+    # return
+
     print("\n==== Checkins ====\n")
 
     checkins = CheckIn.select().where(

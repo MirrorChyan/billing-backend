@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from datetime import datetime
 
 from src.config import settings
-from src.database import CheckIn
+from src.database import CheckIn, IgnoreCheckIn
 
 
 router = APIRouter()
@@ -38,6 +38,18 @@ def check_in_single(item, now) -> bool:
 
     module = item.get("module", "")
     user_agent = item.get("user_agent", "")
+
+    if application and IgnoreCheckIn.get_or_none(application=application):
+        logger.warning(f"ignore check_in, application: {application}")
+        return True
+    
+    if module and IgnoreCheckIn.get_or_none(module=module):
+        logger.warning(f"ignore check_in, module: {module}")
+        return True
+    
+    if user_agent and IgnoreCheckIn.get_or_none(user_agent=user_agent):
+        logger.warning(f"ignore check_in, user_agent: {user_agent}")
+        return True
 
     try:
         checkin, created = CheckIn.get_or_create(

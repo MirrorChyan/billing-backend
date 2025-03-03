@@ -85,6 +85,13 @@ class CheckIn(Model):
         database = db
         table_name = "checkin"
 
+class IgnoreCheckIn(Model):
+    application = CharField()
+    module = CharField()
+    user_agent = CharField()
+    class Meta:
+        database = db
+        table_name = "ignore_checkin"
 
 class Transaction(Model):
     from_platform = CharField()
@@ -128,5 +135,6 @@ class Reward(Model):
 Plan.create_table()
 Bill.create_table()
 CheckIn.create_table()
+IgnoreCheckIn.create_table()
 Transaction.create_table()
 Reward.create_table()
