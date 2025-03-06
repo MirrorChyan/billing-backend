@@ -126,8 +126,6 @@ def monthly_bill(year: int, month: int):
         f.write("\ufeff")  # BOM
         f.write(remark_csv)
 
-    # return
-
     print("\n==== Checkins ====\n")
 
     checkins = CheckIn.select().where(
@@ -154,6 +152,13 @@ def monthly_bill(year: int, month: int):
         Bill.created_at >= prev_month,
     )
 
+    valid_cdks = {}
+    for bill in bills:
+        if bill.cdk in valid_cdks:
+            valid_cdks[bill.cdk].append(bill)
+        else:
+            valid_cdks[bill.cdk] = [bill,]
+
     app_uas = {}
     csvs = {}
     csv_head = "order_id,plan,buy_count,amount,remark,user_id,created_at,expired_at,activated_at\n"
@@ -167,11 +172,10 @@ def monthly_bill(year: int, month: int):
             app_uas[app_ua] = (0, 0)  # count, amount
             csvs[app_ua] = csv_head
 
-        count = 0
         amount = 0
-        for bill in bills:
-            if bill.cdk == checkin.cdk:
-                count += 1
+
+        if checkin.cdk in valid_cdks:
+            for bill in valid_cdks[checkin.cdk]:
                 amount += float(bill.actually_paid)
                 remark = (
                     json.loads(bill.raw_data)
@@ -183,7 +187,7 @@ def monthly_bill(year: int, month: int):
                     app_ua
                 ] += f"{secure_str(bill.order_id)},{plan_titles[bill.plan_id]},{bill.buy_count},{bill.actually_paid},{remark},{secure_str(bill.user_id)},{bill.created_at},{bill.expired_at},{checkin.activated_at}\n"
 
-        if count == 0:
+        else:
             invalid_checkins += 1
             continue
 
