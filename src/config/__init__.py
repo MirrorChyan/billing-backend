@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     cdk_validate_api: str
 
     check_in_secret: str
+    revenue_all_secret: str
 
     class Config:
         env_file = ".env"

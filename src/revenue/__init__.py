@@ -6,6 +6,7 @@ from time import time
 
 from src.database import Bill, CheckIn, IgnoreCheckIn, Plan
 from src.cdk.validate_token import validate_token
+from src.config import settings
 
 router = APIRouter()
 
@@ -51,14 +52,33 @@ def query_db(rid: str):
     logger.debug(f"query_db, rid: {rid}")
 
     now = datetime.now()
-    checkins = (
-        CheckIn.select(CheckIn.cdk, CheckIn.activated_at, CheckIn.user_agent)
-        .where(
-            CheckIn.application == rid,
-            CheckIn.activated_at > datetime(now.year, now.month, 1),
+
+    if rid == settings.revenue_all_secret:
+        checkins = (
+            CheckIn.select(
+                CheckIn.cdk,
+                CheckIn.activated_at,
+                CheckIn.application,
+                CheckIn.user_agent,
+            )
+            .where(
+                CheckIn.activated_at > datetime(now.year, now.month, 1),
+            )
+            .order_by(CheckIn.activated_at)
         )
-        .order_by(CheckIn.activated_at)
-    )
+    else:
+        checkins = (
+            CheckIn.select(
+                CheckIn.cdk,
+                CheckIn.activated_at,
+                CheckIn.user_agent,
+            )
+            .where(
+                CheckIn.application == rid,
+                CheckIn.activated_at > datetime(now.year, now.month, 1),
+            )
+            .order_by(CheckIn.activated_at)
+        )
 
     bills = Bill.select(
         Bill.plan_id, Bill.created_at, Bill.buy_count, Bill.actually_paid, Bill.cdk
@@ -80,7 +100,11 @@ def query_db(rid: str):
             data.append(
                 {
                     "activated_at": checkin.activated_at,
-                    "application": rid,
+                    "application": (
+                        rid
+                        if rid != settings.revenue_all_secret
+                        else checkin.application
+                    ),
                     "user_agent": checkin.user_agent,
                     "plan": PLANS[b.plan_id],
                     "buy_count": b.buy_count,
