@@ -129,8 +129,8 @@ def monthly_bill(year: int, month: int):
     print("\n==== Checkins ====\n")
 
     checkins = CheckIn.select().where(
-        CheckIn.activated_at.year == year,
-        CheckIn.activated_at.month == month,
+        CheckIn.activated_at > datetime(year, month, 1),
+        CheckIn.activated_at < datetime(year, month + 1, 1),
     )
 
     # 有可能订单是以前的，但是激活是在这个月的
@@ -148,8 +148,9 @@ def monthly_bill(year: int, month: int):
     plan_titles = {plan.plan_id: plan.title for plan in all_plans}
 
     bills = Bill.select().where(
-        Bill.created_at < next_month,
         Bill.created_at >= prev_month,
+        Bill.created_at < next_month,
+        Bill.cdk << [checkin.cdk for checkin in checkins],
     )
 
     valid_cdks = {}
