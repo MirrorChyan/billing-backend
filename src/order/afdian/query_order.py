@@ -76,6 +76,7 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
             "plan": {
                 "title": plan.title,
                 "valid_days": plan.valid_days,
+                "group": plan.app_group,
                 "applications": plan.applications,
                 "modules": plan.modules,
                 "cdk_number": plan.cdk_number,

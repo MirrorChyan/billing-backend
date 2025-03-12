@@ -8,7 +8,7 @@ from src.config import settings
 
 async def acquire_cdk(expireTime: datetime, group: str) -> Optional[str]:
     query_body = {
-        "group": group,
+        "typeId": group,
         "expireTime": expireTime.strftime("%Y-%m-%d %H:%M:%S"),
     }
 
