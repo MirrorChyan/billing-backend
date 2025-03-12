@@ -6,8 +6,9 @@ from typing import Optional
 from src.config import settings
 
 
-async def acquire_cdk(expireTime: datetime) -> Optional[str]:
+async def acquire_cdk(expireTime: datetime, group: str) -> Optional[str]:
     query_body = {
+        "group": group,
         "expireTime": expireTime.strftime("%Y-%m-%d %H:%M:%S"),
     }
 

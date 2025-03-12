@@ -92,7 +92,7 @@ plan: {plan}, title: {plan.title}, valid_days: {plan.valid_days}"
 
         await renew_cdk(cdk, expired)
     else:
-        cdk = await acquire_cdk(now + delta)
+        cdk = await acquire_cdk(now + delta, plan.app_group)
         expired = now + delta
 
     try:

@@ -37,6 +37,7 @@ class Plan(Model):
 
     title = TextField()
     valid_days = IntegerField()
+    app_group = TextField()
     applications = TextField()
     modules = TextField()
     cdk_number = IntegerField()
