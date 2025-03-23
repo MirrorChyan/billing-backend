@@ -21,7 +21,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/MirrorChyan/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -29,7 +29,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-  
