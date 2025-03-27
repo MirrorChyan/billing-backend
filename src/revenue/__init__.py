@@ -10,9 +10,8 @@ from src.config import settings
 
 router = APIRouter()
 
-pre_data_cache = {}  # 以前月份的，不会再有变化了，获取一次就行，不用记录update时间
-cur_data_cache = {}  # 现在月份的，可能会有新的数据进来，所以需要记录更新时间
-
+cur_data_cache = {}
+pre_data_cache = {}
 
 @router.get("/revenue")
 async def query_revenue(rid: str, date: str, request: Request):
@@ -44,7 +43,7 @@ async def query_revenue(rid: str, date: str, request: Request):
     now = datetime.now()
     if dt.year == now.year and dt.month == now.month:
         global cur_data_cache
-
+        # 现在月份的，可能会有新的数据进来，所以需要记录更新时间
         if rid in cur_data_cache:
             data, last_update = cur_data_cache[rid]
             timediff = time() - last_update
@@ -60,6 +59,7 @@ async def query_revenue(rid: str, date: str, request: Request):
 
     else:
         global pre_data_cache
+        # 以前月份的，不会再有变化了，获取一次就行，不用记录update时间
 
         if rid not in pre_data_cache:
             pre_data_cache[rid] = {}
