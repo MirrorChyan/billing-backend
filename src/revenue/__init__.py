@@ -10,8 +10,8 @@ from src.config import settings
 
 router = APIRouter()
 
-cur_data_cache = {}
-pre_data_cache = {}
+cur_month_cache = {}
+past_month_cache = {}
 
 @router.get("/revenue")
 async def query_revenue(rid: str, date: str, request: Request):
@@ -41,11 +41,16 @@ async def query_revenue(rid: str, date: str, request: Request):
         return {"ec": 400, "msg": "Invalid date format"}
 
     now = datetime.now()
+
+    if dt.year < 2025 or dt.year > now.year or (dt.year == now.year and dt.month > now.month):
+        logger.error(f"Invalid date: {date}")
+        return {"ec": 400, "msg": "Invalid date"}
+
     if dt.year == now.year and dt.month == now.month:
-        global cur_data_cache
+        global cur_month_cache
         # 现在月份的，可能会有新的数据进来，所以需要记录更新时间
-        if rid in cur_data_cache:
-            data, last_update = cur_data_cache[rid]
+        if rid in cur_month_cache:
+            data, last_update = cur_month_cache[rid]
             timediff = time() - last_update
             if timediff < 60:
                 logger.debug(
@@ -54,22 +59,22 @@ async def query_revenue(rid: str, date: str, request: Request):
                 return {"ec": 200, "data": data}
 
         data = query_db(rid, dt)
-        cur_data_cache[rid] = (data, time())
+        cur_month_cache[rid] = (data, time())
         return {"ec": 200, "data": data}
 
     else:
-        global pre_data_cache
+        global past_month_cache
         # 以前月份的，不会再有变化了，获取一次就行，不用记录update时间
 
-        if rid not in pre_data_cache:
-            pre_data_cache[rid] = {}
+        if rid not in past_month_cache:
+            past_month_cache[rid] = {}
 
-        if date in pre_data_cache[rid]:
-            data = pre_data_cache[rid][date]
+        if date in past_month_cache[rid]:
+            data = past_month_cache[rid][date]
             logger.debug(f"pre month cache hit, rid: {rid}, date: {date}")
         else:
             data = query_db(rid, dt)
-            pre_data_cache[rid][date] = data
+            past_month_cache[rid][date] = data
 
         return {"ec": 200, "data": data}
 
