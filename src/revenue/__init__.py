@@ -17,7 +17,7 @@ CACHE_EXPIRATION = 60  # seconds
 
 @router.get("/revenue")
 async def query_revenue(rid: str, date: str, request: Request):
-    logger.debug(f"rid: {rid}")
+    logger.debug(f"rid: {rid}, date: {date}")
 
     if not rid:
         logger.error("rid is required")
@@ -86,7 +86,7 @@ async def query_revenue(rid: str, date: str, request: Request):
 
 
 def query_db(rid: str, date: datetime):
-    logger.debug(f"query_db, rid: {rid}")
+    logger.debug(f"query_db, rid: {rid}, date: {date}")
 
     plans = {plan.plan_id: plan.title for plan in Plan.select(Plan.plan_id, Plan.title)}
 
@@ -156,5 +156,5 @@ def query_db(rid: str, date: datetime):
                 }
             )
 
-    logger.success(f"query_db success, rid: {rid}, len(data): {len(data)}")
+    logger.success(f"query_db success, rid: {rid}, date: {date}, len(data): {len(data)}")
     return data
