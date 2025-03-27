@@ -49,7 +49,9 @@ async def query_revenue(rid: str, date: str, request: Request):
             data, last_update = cur_data_cache[rid]
             timediff = time() - last_update
             if timediff < 60:
-                logger.debug(f"cur month cache hit, rid: {rid}, date: {date}, timediff: {timediff}")
+                logger.debug(
+                    f"cur month cache hit, rid: {rid}, date: {date}, timediff: {timediff}"
+                )
                 return {"ec": 200, "data": data}
 
         data = query_db(rid, dt)
@@ -61,7 +63,7 @@ async def query_revenue(rid: str, date: str, request: Request):
 
         if rid not in pre_data_cache:
             pre_data_cache[rid] = {}
-        
+
         if date in pre_data_cache[rid]:
             data = pre_data_cache[rid][date]
             logger.debug(f"pre month cache hit, rid: {rid}, date: {date}")
@@ -93,8 +95,7 @@ def query_db(rid: str, date: datetime):
                 CheckIn.user_agent,
             )
             .where(
-                CheckIn.activated_at >= datetime(cur_month.year, cur_month.month, 1),
-                CheckIn.activated_at < datetime(next_month.year, next_month.month, 1),
+                CheckIn.activated_at.between(cur_month, next_month),
             )
             .order_by(CheckIn.activated_at)
         )
@@ -107,8 +108,7 @@ def query_db(rid: str, date: datetime):
             )
             .where(
                 CheckIn.application == rid,
-                CheckIn.activated_at >= datetime(cur_month.year, cur_month.month, 1),
-                CheckIn.activated_at < datetime(next_month.year, next_month.month, 1),
+                CheckIn.activated_at.between(cur_month, next_month),
             )
             .order_by(CheckIn.activated_at)
         )
