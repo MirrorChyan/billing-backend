@@ -12,6 +12,8 @@ router = APIRouter()
 
 cur_month_cache = {}
 past_month_cache = {}
+CACHE_EXPIRATION = 60  # seconds
+
 
 @router.get("/revenue")
 async def query_revenue(rid: str, date: str, request: Request):
@@ -42,7 +44,11 @@ async def query_revenue(rid: str, date: str, request: Request):
 
     now = datetime.now()
 
-    if dt.year < 2025 or dt.year > now.year or (dt.year == now.year and dt.month > now.month):
+    if (
+        dt.year < 2025
+        or dt.year > now.year
+        or (dt.year == now.year and dt.month > now.month)
+    ):
         logger.error(f"Invalid date: {date}")
         return {"ec": 400, "msg": "Invalid date"}
 
@@ -51,8 +57,8 @@ async def query_revenue(rid: str, date: str, request: Request):
         # 现在月份的，可能会有新的数据进来，所以需要记录更新时间
         if rid in cur_month_cache:
             data, last_update = cur_month_cache[rid]
-            timediff = time() - last_update
-            if timediff < 60:
+            timediff = int(time() - last_update)
+            if timediff < CACHE_EXPIRATION:
                 logger.debug(
                     f"cur month cache hit, rid: {rid}, date: {date}, timediff: {timediff}"
                 )
@@ -71,7 +77,7 @@ async def query_revenue(rid: str, date: str, request: Request):
 
         if date in past_month_cache[rid]:
             data = past_month_cache[rid][date]
-            logger.debug(f"pre month cache hit, rid: {rid}, date: {date}")
+            logger.debug(f"past month cache hit, rid: {rid}, date: {date}")
         else:
             data = query_db(rid, dt)
             past_month_cache[rid][date] = data
