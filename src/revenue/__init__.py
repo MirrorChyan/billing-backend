@@ -152,7 +152,7 @@ def query_db(rid: str, date: datetime):
                     "user_agent": (
                         checkin.user_agent
                         if checkin.user_agent
-                        else f"{checkin.application}-Unknown"
+                        else f"{checkin.application}-NoUA"
                     ),
                     "plan": plans[b.plan_id],
                     "buy_count": b.buy_count,
