@@ -10,13 +10,14 @@ from src.config import settings
 
 router = APIRouter()
 
-PLANS = {plan.plan_id: plan.title for plan in Plan.select(Plan.plan_id, Plan.title)}
-data_cache = {}
+cur_month_cache = {}
+past_month_cache = {}
+CACHE_EXPIRATION = 60  # seconds
 
 
 @router.get("/revenue")
-async def query_revenue(rid: str, request: Request):
-    logger.debug(f"rid: {rid}")
+async def query_revenue(rid: str, date: str, request: Request):
+    logger.debug(f"rid: {rid}, date: {date}")
 
     if not rid:
         logger.error("rid is required")
@@ -35,23 +36,66 @@ async def query_revenue(rid: str, request: Request):
         logger.warning(f"ignore check_in, application: {rid}")
         return {"ec": 404, "msg": "Not Found"}
 
-    global data_cache
-    if rid in data_cache:
-        data, last_update = data_cache[rid]
-        if time() - last_update < 60:
-            logger.debug(f"cache hit, rid: {rid}")
-            return {"ec": 200, "data": data}
-
-    data = query_db(rid)
-    data_cache[rid] = (data, time())
-
-    return {"ec": 200, "data": data}
-
-
-def query_db(rid: str):
-    logger.debug(f"query_db, rid: {rid}")
+    try:
+        dt: datetime = datetime.strptime(date, "%Y%m")
+    except ValueError:
+        logger.error(f"Invalid date format: {date}")
+        return {"ec": 400, "msg": "Invalid date format"}
 
     now = datetime.now()
+
+    if (
+        dt.year < 2025
+        or dt.year > now.year
+        or (dt.year == now.year and dt.month > now.month)
+    ):
+        logger.error(f"Invalid date: {date}")
+        return {"ec": 400, "msg": "Invalid date"}
+
+    if dt.year == now.year and dt.month == now.month:
+        global cur_month_cache
+        # 现在月份的，可能会有新的数据进来，所以需要记录更新时间
+        if rid in cur_month_cache:
+            data, last_update = cur_month_cache[rid]
+            timediff = int(time() - last_update)
+            if timediff < CACHE_EXPIRATION:
+                logger.debug(
+                    f"cur month cache hit, rid: {rid}, date: {date}, timediff: {timediff}"
+                )
+                return {"ec": 200, "data": data}
+
+        data = query_db(rid, dt)
+        cur_month_cache[rid] = (data, time())
+        return {"ec": 200, "data": data}
+
+    else:
+        global past_month_cache
+        # 以前月份的，不会再有变化了，获取一次就行，不用记录update时间
+
+        if rid not in past_month_cache:
+            past_month_cache[rid] = {}
+
+        if date in past_month_cache[rid]:
+            data = past_month_cache[rid][date]
+            logger.debug(f"past month cache hit, rid: {rid}, date: {date}")
+        else:
+            data = query_db(rid, dt)
+            past_month_cache[rid][date] = data
+
+        return {"ec": 200, "data": data}
+
+
+def query_db(rid: str, date: datetime):
+    logger.debug(f"query_db, rid: {rid}, date: {date}")
+
+    plans = {plan.plan_id: plan.title for plan in Plan.select(Plan.plan_id, Plan.title)}
+
+    cur_month = datetime(date.year, date.month, 1)
+
+    if date.month == 12:
+        next_month = datetime(date.year + 1, 1, 1)
+    else:
+        next_month = datetime(date.year, date.month + 1, 1)
 
     if rid == settings.revenue_all_secret:
         checkins = (
@@ -62,7 +106,7 @@ def query_db(rid: str):
                 CheckIn.user_agent,
             )
             .where(
-                CheckIn.activated_at > datetime(now.year, now.month, 1),
+                CheckIn.activated_at.between(cur_month, next_month),
             )
             .order_by(CheckIn.activated_at)
         )
@@ -75,7 +119,7 @@ def query_db(rid: str):
             )
             .where(
                 CheckIn.application == rid,
-                CheckIn.activated_at > datetime(now.year, now.month, 1),
+                CheckIn.activated_at.between(cur_month, next_month),
             )
             .order_by(CheckIn.activated_at)
         )
@@ -106,11 +150,11 @@ def query_db(rid: str):
                         else checkin.application
                     ),
                     "user_agent": checkin.user_agent,
-                    "plan": PLANS[b.plan_id],
+                    "plan": plans[b.plan_id],
                     "buy_count": b.buy_count,
                     "amount": b.actually_paid,
                 }
             )
 
-    logger.success(f"query_db success, rid: {rid}, len(data): {len(data)}")
+    logger.success(f"query_db success, rid: {rid}, date: {date}, len(data): {len(data)}")
     return data
