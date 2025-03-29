@@ -149,12 +149,18 @@ def query_db(rid: str, date: datetime):
                         if rid != settings.revenue_all_secret
                         else checkin.application
                     ),
-                    "user_agent": checkin.user_agent,
+                    "user_agent": (
+                        checkin.user_agent
+                        if checkin.user_agent
+                        else f"{checkin.application}-Unknown"
+                    ),
                     "plan": plans[b.plan_id],
                     "buy_count": b.buy_count,
                     "amount": b.actually_paid,
                 }
             )
 
-    logger.success(f"query_db success, rid: {rid}, date: {date}, len(data): {len(data)}")
+    logger.success(
+        f"query_db success, rid: {rid}, date: {date}, len(data): {len(data)}"
+    )
     return data
