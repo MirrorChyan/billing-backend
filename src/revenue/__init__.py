@@ -141,20 +141,20 @@ def query_db(rid: str, date: datetime):
             continue
 
         for b in cur_bills:
+            app = rid if rid != settings.revenue_all_secret else checkin.application
+            ua = checkin.user_agent if checkin.user_agent else f"{app}-NoUA"
             data.append(
                 {
                     "activated_at": checkin.activated_at,
-                    "application": (
-                        rid
-                        if rid != settings.revenue_all_secret
-                        else checkin.application
-                    ),
-                    "user_agent": checkin.user_agent,
+                    "application": app,
+                    "user_agent": ua,
                     "plan": plans[b.plan_id],
                     "buy_count": b.buy_count,
                     "amount": b.actually_paid,
                 }
             )
 
-    logger.success(f"query_db success, rid: {rid}, date: {date}, len(data): {len(data)}")
+    logger.success(
+        f"query_db success, rid: {rid}, date: {date}, len(data): {len(data)}"
+    )
     return data
