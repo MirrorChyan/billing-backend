@@ -41,6 +41,14 @@ async def process_order(out_trade_no: str) -> Tuple[Any, str]:
             .get_or_none()
         )
 
+    product_type = order.get("product_type", None)
+    if product_type != 1:
+        logger.error(
+            f"Product type not supported, out_trade_no: {out_trade_no}, product_type: {product_type}"
+        )
+        return None, "Product type not supported"
+
+
     now = datetime.now()
     buy_count = order.get("sku_detail", [{}])[0].get("count", 1)
 
