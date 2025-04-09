@@ -128,6 +128,7 @@ def query_db(rid: str, date: datetime):
         Bill.plan_id, Bill.created_at, Bill.buy_count, Bill.actually_paid, Bill.cdk
     ).where(
         Bill.cdk << [checkin.cdk for checkin in checkins],
+        Bill.transferred >= 0,
     )
 
     bill_dict = defaultdict(list)
