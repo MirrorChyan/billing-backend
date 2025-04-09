@@ -69,6 +69,8 @@ class Bill(Model):
     # from backend
     cdk = CharField()
 
+    transferred = IntegerField(default=0)
+
     class Meta:
         database = db
         table_name = "bill"
