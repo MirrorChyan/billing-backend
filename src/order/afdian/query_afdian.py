@@ -30,22 +30,20 @@ async def query(url: str, params: dict) -> dict:
         "sign": query_sign,
     }
 
-    response = None
     for i in range(1, 4):
         try:
             async with ClientSession() as session:
                 async with session.post(url, json=query_body) as response:
                     response = await response.json()
                     logger.debug(f"url: {url}, params: {params}, response: {response}")
-                    if response.get("ec") == 200:
-                        return response
+                    return response
         except Exception as e:
-            logger.error(f"query error: {e}")
+            logger.error(f"url: {url}, params: {params}, query error: {e}")
             await asyncio.sleep(i * i)
             continue
 
     logger.error(f"query failed, url: {url}, params: {params}")
-    return response
+    return {}
 
 
 async def query_order_by_out_trade_no(out_trade_no: str) -> dict:
