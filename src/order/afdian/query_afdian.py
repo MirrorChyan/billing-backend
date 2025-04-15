@@ -3,6 +3,7 @@ from loguru import logger
 import json
 import time
 import hashlib
+import asyncio
 
 from src.config import settings
 
@@ -40,12 +41,11 @@ async def query(url: str, params: dict) -> dict:
                         return response
         except Exception as e:
             logger.error(f"query error: {e}")
-            time.sleep(i * i)
+            await asyncio.sleep(i * i)
             continue
 
     logger.error(f"query failed, url: {url}, params: {params}")
     return response
-
 
 
 async def query_order_by_out_trade_no(out_trade_no: str) -> dict:
