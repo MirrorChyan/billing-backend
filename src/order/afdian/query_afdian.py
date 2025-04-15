@@ -3,6 +3,7 @@ from loguru import logger
 import json
 import time
 import hashlib
+import asyncio
 
 from src.config import settings
 
@@ -29,12 +30,20 @@ async def query(url: str, params: dict) -> dict:
         "sign": query_sign,
     }
 
-    async with ClientSession() as session:
-        async with session.post(url, json=query_body) as response:
-            response = await response.json()
-            logger.debug(f"url: {url}, params: {params}, response: {response}")
+    for i in range(1, 4):
+        try:
+            async with ClientSession() as session:
+                async with session.post(url, json=query_body) as response:
+                    response = await response.json()
+                    logger.debug(f"url: {url}, params: {params}, response: {response}")
+                    return response
+        except Exception as e:
+            logger.error(f"url: {url}, params: {params}, query error: {e}")
+            await asyncio.sleep(i * i)
+            continue
 
-    return response
+    logger.error(f"query failed, url: {url}, params: {params}")
+    return {}
 
 
 async def query_order_by_out_trade_no(out_trade_no: str) -> dict:

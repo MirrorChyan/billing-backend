@@ -11,13 +11,15 @@ from src.config import settings
 router = APIRouter()
 
 cur_month_cache = {}
-past_month_cache = {}
+cur_month_ua_cache = {}
 CACHE_EXPIRATION = 60  # seconds
 
+past_month_cache = {}
+past_month_ua_cache = {}
 
 @router.get("/revenue")
-async def query_revenue(rid: str, date: str, request: Request):
-    logger.debug(f"rid: {rid}, date: {date}")
+async def query_revenue(rid: str, date: str, request: Request, is_ua: bool = False):
+    logger.debug(f"rid: {rid}, date: {date}, is_ua: {is_ua}")
 
     if not rid:
         logger.error("rid is required")
@@ -32,7 +34,7 @@ async def query_revenue(rid: str, date: str, request: Request):
         logger.error("Unauthorized")
         return {"ec": 401, "msg": "Unauthorized"}
 
-    if IgnoreCheckIn.get_or_none(application=rid):
+    if not is_ua and IgnoreCheckIn.get_or_none(application=rid):
         logger.warning(f"ignore check_in, application: {rid}")
         return {"ec": 404, "msg": "Not Found"}
 
@@ -53,10 +55,15 @@ async def query_revenue(rid: str, date: str, request: Request):
         return {"ec": 400, "msg": "Invalid date"}
 
     if dt.year == now.year and dt.month == now.month:
-        global cur_month_cache
+        global cur_month_cache, cur_month_ua_cache
         # 现在月份的，可能会有新的数据进来，所以需要记录更新时间
-        if rid in cur_month_cache:
-            data, last_update = cur_month_cache[rid]
+        if is_ua:
+            cache = cur_month_ua_cache
+        else:
+            cache = cur_month_cache
+
+        if rid in cache:
+            data, last_update = cache[rid]
             timediff = int(time() - last_update)
             if timediff < CACHE_EXPIRATION:
                 logger.debug(
@@ -64,29 +71,34 @@ async def query_revenue(rid: str, date: str, request: Request):
                 )
                 return {"ec": 200, "data": data}
 
-        data = query_db(rid, dt)
-        cur_month_cache[rid] = (data, time())
+        data = query_db(rid, dt, is_ua)
+        cache[rid] = (data, time())
         return {"ec": 200, "data": data}
 
     else:
-        global past_month_cache
+        global past_month_cache, past_month_ua_cache
         # 以前月份的，不会再有变化了，获取一次就行，不用记录update时间
 
-        if rid not in past_month_cache:
-            past_month_cache[rid] = {}
+        if is_ua:
+            cache = past_month_ua_cache
+        else:
+            cache = past_month_cache
 
-        if date in past_month_cache[rid]:
-            data = past_month_cache[rid][date]
+        if rid not in cache:
+            cache[rid] = {}
+
+        if date in cache[rid]:
+            data = cache[rid][date]
             logger.debug(f"past month cache hit, rid: {rid}, date: {date}")
         else:
-            data = query_db(rid, dt)
-            past_month_cache[rid][date] = data
+            data = query_db(rid, dt, is_ua)
+            cache[rid][date] = data
 
         return {"ec": 200, "data": data}
 
 
-def query_db(rid: str, date: datetime):
-    logger.debug(f"query_db, rid: {rid}, date: {date}")
+def query_db(rid: str, date: datetime, is_ua: bool):
+    logger.debug(f"query_db, rid: {rid}, date: {date}, is_ua: {is_ua}")
 
     plans = {plan.plan_id: plan.title for plan in Plan.select(Plan.plan_id, Plan.title)}
 
@@ -110,15 +122,30 @@ def query_db(rid: str, date: datetime):
             )
             .order_by(CheckIn.activated_at)
         )
-    else:
+    elif not is_ua:
         checkins = (
             CheckIn.select(
                 CheckIn.cdk,
                 CheckIn.activated_at,
+                CheckIn.application,
                 CheckIn.user_agent,
             )
             .where(
                 CheckIn.application == rid,
+                CheckIn.activated_at.between(cur_month, next_month),
+            )
+            .order_by(CheckIn.activated_at)
+        )
+    else: # is_ua
+        checkins = (
+            CheckIn.select(
+                CheckIn.cdk,
+                CheckIn.activated_at,
+                CheckIn.application,
+                CheckIn.user_agent,
+            )
+            .where(
+                CheckIn.user_agent == rid,
                 CheckIn.activated_at.between(cur_month, next_month),
             )
             .order_by(CheckIn.activated_at)
@@ -128,6 +155,7 @@ def query_db(rid: str, date: datetime):
         Bill.plan_id, Bill.created_at, Bill.buy_count, Bill.actually_paid, Bill.cdk
     ).where(
         Bill.cdk << [checkin.cdk for checkin in checkins],
+        Bill.transferred >= 0,
     )
 
     bill_dict = defaultdict(list)
@@ -141,7 +169,7 @@ def query_db(rid: str, date: datetime):
             continue
 
         for b in cur_bills:
-            app = rid if rid != settings.revenue_all_secret else checkin.application
+            app = checkin.application
             ua = checkin.user_agent if checkin.user_agent else f"{app}-NoUA"
             data.append(
                 {
@@ -155,6 +183,6 @@ def query_db(rid: str, date: datetime):
             )
 
     logger.success(
-        f"query_db success, rid: {rid}, date: {date}, len(data): {len(data)}"
+        f"query_db success, rid: {rid}, date: {date}, is_ua: {is_ua}, len(data): {len(data)}"
     )
     return data

@@ -43,7 +43,7 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         }
 
     # 已经转过一次了
-    if from_bill.expired_at < now:
+    if from_bill.expired_at < now or from_bill.transferred < 0:
         logger.error(f"order already transferred, _from: {_from}")
         return {"ec": 403, "msg": "Order already transferred"}
 
@@ -63,8 +63,11 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
     # cdk-backend 那边不允许过去的时间，加个10秒的缓冲
     await renew_cdk(from_bill.cdk, from_bill.expired_at + timedelta(seconds=10))
 
+    transferred = from_bill.transferred
+
     # 方便查账，Bill 里搜这个 CDK 能找同时找到两条记录
     from_bill.cdk = to_bill.cdk
+    from_bill.transferred = -1
     from_bill.save()
 
     delta = timedelta(days=from_plan.valid_days * from_bill.buy_count)
@@ -73,6 +76,8 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         to_bill.expired_at = to_bill.expired_at + delta
     else:
         to_bill.expired_at = now + delta
+
+    to_bill.transferred += transferred + 1
 
     await renew_cdk(to_bill.cdk, to_bill.expired_at)
     to_bill.save()
