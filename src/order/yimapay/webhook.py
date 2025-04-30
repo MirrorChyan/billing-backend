@@ -1,5 +1,5 @@
 from loguru import logger
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, Response
 
 from src.config import settings
 from .factory import process_yimapay_order
@@ -8,15 +8,22 @@ router = APIRouter()
 
 
 @router.post("/order/yimapay/webhook/" + settings.yimapay_webhook_secret)
-async def yimapay_webhook(app_id: str, trade_no: str):
-    logger.debug(f"app_id: {app_id}, trade_no: {trade_no}")
+async def yimapay_webhook(request: Request, response: Response):
+    query_params = dict(request.query_params)
+    body = await request.body()
+    logger.debug(f"query_params: {query_params}, body: {body}")
+
+    app_id = query_params.get("app_id")
+    trade_no = query_params.get("trade_no")
 
     if app_id != settings.yimapay_app_id:
         logger.error(f"Invalid app_id: {app_id}")
+        response.status_code = 403
         return {"code": "FAIL", "message": f"Invalid app_id {app_id}"}
 
     if not trade_no:
         logger.error(f"Invalid trade_no: {trade_no}")
+        response.status_code = 400
         return {"code": "FAIL", "message": f"Invalid trade_no {trade_no}"}
 
     success, message = await process_yimapay_order(trade_no)
@@ -24,6 +31,7 @@ async def yimapay_webhook(app_id: str, trade_no: str):
         logger.error(
             f"Process order failed, trade_no: {trade_no}, message: {message}"
         )
+        response.status_code = 500
         return {"code": "FAIL", "message": f"{message} {trade_no}"}
 
     logger.success(
