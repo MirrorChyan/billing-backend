@@ -1,5 +1,6 @@
+from typing import Annotated
 from loguru import logger
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Form, Request, Response
 
 from src.config import settings
 from .factory import process_yimapay_order
@@ -8,13 +9,8 @@ router = APIRouter()
 
 
 @router.post("/order/yimapay/webhook/" + settings.yimapay_webhook_secret)
-async def yimapay_webhook(request: Request, response: Response):
-    query_params = dict(request.query_params)
-    body = await request.body()
-    logger.debug(f"query_params: {query_params}, body: {body}")
-
-    app_id = query_params.get("app_id")
-    trade_no = query_params.get("trade_no")
+async def yimapay_webhook(app_id: Annotated[str, Form()], trade_no: Annotated[str, Form()], response: Response):
+    logger.debug(f"app_id: {app_id}, trade_no: {trade_no}")
 
     if app_id != settings.yimapay_app_id:
         logger.error(f"Invalid app_id: {app_id}")
