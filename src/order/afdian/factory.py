@@ -1,10 +1,10 @@
 from typing import Tuple, Any
 from loguru import logger
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 from src.order.factory import OrderData, process_order
-from .query_afdian import query_order_by_out_trade_no
+from .request_afdian import query_order_by_out_trade_no
 
 
 async def process_afdian_order(out_trade_no: str) -> Tuple[Any, str]:

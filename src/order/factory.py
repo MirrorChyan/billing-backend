@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Tuple, Any
 from loguru import logger
 from datetime import datetime, timedelta
-import json
 
 from src.database import Bill, Plan
 from src.cdk.acquire_cdk import acquire_cdk

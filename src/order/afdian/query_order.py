@@ -2,7 +2,7 @@ from loguru import logger
 from fastapi import APIRouter
 from datetime import datetime
 
-from src.database import Bill, Plan, Reward
+from src.database import Bill, Plan
 from .factory import process_afdian_order
 
 router = APIRouter()
@@ -11,8 +11,6 @@ router = APIRouter()
 @router.get("/order/afdian")
 async def query_order(order_id: str = None, custom_order_id: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
-    if order_id and not order_id.isdigit():
-        return query_reward(order_id)
 
     if not order_id and not custom_order_id:
         logger.error(f"order_id and custom_order_id is None")
@@ -81,29 +79,5 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
                 "modules": plan.modules,
                 "cdk_number": plan.cdk_number,
             },
-        },
-    }
-
-
-def query_reward(reward_key: str):
-    reward = Reward.get_or_none(Reward.reward_key == reward_key)
-    if not reward:
-        return {"ec": 400, "msg": "Reward not found"}
-
-    return {
-        "ec": 200,
-        "msg": "Success",
-        "data": {
-            "cdk": "",  # for compatibility with order
-            "reward_key": reward.reward_key,
-            "start_at": reward.start_at,
-            "expired_at": reward.expired_at,
-            "title": reward.title,
-            "valid_days": reward.valid_days,
-            "applications": reward.applications,
-            "modules": reward.modules,
-            "remaining": reward.remaining,
-            "order_created_after": reward.order_created_after,
-            "order_created_before": reward.order_created_before,
         },
     }
