@@ -1,3 +1,4 @@
+import json
 import string
 from loguru import logger
 from fastapi import APIRouter, HTTPException, Request
@@ -8,7 +9,7 @@ from loguru import logger
 from src.database import Plan
 from src.config import settings
 
-from .query_yimapay import query
+from .request_yimapay import query
 
 router = APIRouter()
 
@@ -24,29 +25,35 @@ async def create_order(pay: str, plan_id: str, request: Request):
         pay_type = 20
     else:
         logger.error(f"Invalid pay type: {pay}")
-        return {"ec": 400, "code": 1001, "msg": "Invalid pay"}
+        return {"ec": 400, "code": 21001, "msg": "Invalid pay"}
 
     try:
         plan = Plan.get(Plan.platform == "yimapay", Plan.plan_id == plan_id)
     except Exception as e:
         logger.error(f"Plan not found, plan_id: {plan_id}, error: {e}")
-        return {"ec": 400, "code": 1002, "msg": "Plan not found"}
+        return {"ec": 404, "code": 21002, "msg": "Plan not found"}
 
-    out_trade_no = datetime.now().strftime("%Y%m%d%H%M%S") + "".join(
+    custom_order_id = datetime.now().strftime("%Y%m%d%H%M%S") + "".join(
         random.SystemRandom().choices(string.ascii_lowercase + string.digits, k=16)
     )
 
     client_ip = request.headers.get("X-Forwarded-For", request.client.host)
 
+    attach = {
+        "pay": pay,
+        "plan_id": plan.plan_id,
+    }
+
     # https://api.yimapay.com/docs/api.html?chapter=1
     params = {
-        "out_trade_no": out_trade_no,
+        "out_trade_no": custom_order_id,
         "pay_type": pay_type,
         "description": plan.title,
         "amount": plan.amount,
         "client_ip": client_ip,
         "time_expire": 30,  # 分钟
-        "notify_url": settings.yimapay_notify_url,
+        "notify_url": settings.yimapay_notify_url + settings.yimapay_secret_key,
+        "attach": json.dumps(attach, separators=(',', ':')),
     }
 
     response = await query(settings.yimapay_create_order_api, params)
@@ -54,20 +61,24 @@ async def create_order(pay: str, plan_id: str, request: Request):
         logger.error(
             f"Query order failed, url: {settings.yimapay_create_order_api}, params: {params}"
         )
-        return {"ec": 500, "code": 1003, "msg": f"Query order failed {out_trade_no}"}
+        return {"ec": 500, "code": 21000, "msg": f"Query order failed {custom_order_id}"}
 
     if response.get("resultCode") != 200:
         logger.error(
             f"Create order failed, url: {settings.yimapay_create_order_api}, params: {params}, response: {response}"
         )
-        return {"ec": 500, "code": 1004, "msg": f"Create order failed {out_trade_no}"}
+        return {
+            "ec": 500,
+            "code": 21000,
+            "msg": f"Create order failed {custom_order_id}",
+        }
 
     pay_url = response.get("Data", {}).get("body")
     if not pay_url:
         logger.error(
             f"Pay URL not found, url: {settings.yimapay_create_order_api}, params: {params}, response: {response}"
         )
-        return {"ec": 500, "code": 1005, "msg": f"Pay URL not found {out_trade_no}"}
+        return {"ec": 500, "code": 21000, "msg": f"Pay URL not found {custom_order_id}"}
 
     return {
         "ec": 200,
@@ -75,7 +86,7 @@ async def create_order(pay: str, plan_id: str, request: Request):
         "msg": "success",
         "data": {
             "pay_url": pay_url,
-            "custom_order_id": out_trade_no,
+            "custom_order_id": custom_order_id,
             "amount": plan.amount,
             "title": plan.title,
         },

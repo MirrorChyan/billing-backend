@@ -1,53 +1,51 @@
 from loguru import logger
 from fastapi import APIRouter
-from datetime import datetime
 
 from src.database import Bill, Plan
-from .factory import process_afdian_order
+from .yimapay.factory import process_yimapay_order
+from .afdian.factory import process_afdian_order
 
 router = APIRouter()
 
 
-@router.get("/order/afdian")
+@router.get("/order/query")
 async def query_order(order_id: str = None, custom_order_id: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
-
-    if not order_id and not custom_order_id:
-        logger.error(f"order_id and custom_order_id is None")
-        return {"ec": 400, "msg": "order_id is required"}
-
     if order_id:
-        bill = Bill.get_or_none(Bill.platform == "afdian", Bill.order_id == order_id)
+        bill = Bill.get_or_none(Bill.order_id == order_id)
     elif custom_order_id:
-        bill = Bill.get_or_none(
-            Bill.platform == "afdian", Bill.custom_order_id == custom_order_id
-        )
+        bill = Bill.get_or_none(Bill.custom_order_id == custom_order_id)
     else:
-        return {"ec": 400, "msg": "order_id is required"}
+        return {"ec": 400, "code": 21001, "msg": "order_id is required"}
 
     if not bill:
-        if not order_id:
-            return {"ec": 400, "msg": "Order not found"}
-
-        # 如果订单号是正确的，能走到这里说明没收到爱发电的推送
-        # 主动去爱发电查一下
+        # 如果订单号是正确的，能走到这里说明没收到平台的推送
+        # 主动去平台查一下
         # logger.warning(
         #     f"Bill not found, order_id: {order_id}, custom_order_id: {custom_order_id}"
         # )
-        bill, message = await process_afdian_order("afdian", order_id)
+        if not order_id:
+            return {"ec": 400, "code": 21001, "msg": "order_id is required"}
+
+        if order_id.startswith("YMF"):
+            bill, message = await process_yimapay_order(order_id)
+        elif order_id.isdigit():
+            bill, message = await process_afdian_order(order_id)
+        else:
+            return {"ec": 404, "code": 21002, "msg": "Order not found"}
+
         if not bill:
-            # logger.error(f"order not found, order_id: {order_id}")
-            return {"ec": 400, "msg": message}
+            return {"ec": 400, "code": 1, "msg": message}
 
     try:
-        plan = Plan.get(Plan.platform == "afdian", Plan.plan_id == bill.plan_id)
+        plan = Plan.get(Plan.plan_id == bill.plan_id)
     except Exception as e:
         logger.error(f"Plan not found, order_id: {order_id}, error: {e}")
-        return {"ec": 500, "msg": "Plan not found"}
+        return {"ec": 500, "code": 21000, "msg": "Unknow error, please contact us!"}
 
     if not bill.cdk:
         logger.error(f"CDK not found, order_id: {order_id}")
-        return {"ec": 500, "msg": "Unknow error, please contact us!"}
+        return {"ec": 500, "code": 21000, "msg": "Unknow error, please contact us!"}
 
     latest_bill = (
         Bill.select()
@@ -57,10 +55,11 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
     )
     if not latest_bill:
         logger.error(f"CDK not found, order_id: {order_id}")
-        return {"ec": 500, "msg": "Unknow error, please contact us!"}
+        return {"ec": 500, "code": 21000, "msg": "Unknow error, please contact us!"}
 
     return {
         "ec": 200,
+        "code": 0,
         "msg": "Success",
         "data": {
             "platform": bill.platform,
