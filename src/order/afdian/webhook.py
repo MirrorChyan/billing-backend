@@ -2,7 +2,7 @@ from loguru import logger
 from fastapi import APIRouter
 
 from src.config import settings
-from .factory import process_order
+from .factory import process_afdian_order
 
 router = APIRouter()
 
@@ -24,7 +24,7 @@ async def afdian_webhook(webhook_body: dict):
         )
         return {"ec": 200, "em": "Test success"}
 
-    success, message = await process_order(out_trade_no)
+    success, message = await process_afdian_order("afdian", out_trade_no)
     if not success:
         logger.error(
             f"Process order failed, out_trade_no: {out_trade_no}, message: {message}"

@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from datetime import datetime
 
 from src.database import Bill, Plan, Reward
-from .factory import process_order
+from .factory import process_afdian_order
 
 router = APIRouter()
 
@@ -36,7 +36,7 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         # logger.warning(
         #     f"Bill not found, order_id: {order_id}, custom_order_id: {custom_order_id}"
         # )
-        bill, message = await process_order(order_id)
+        bill, message = await process_afdian_order("afdian", order_id)
         if not bill:
             # logger.error(f"order not found, order_id: {order_id}")
             return {"ec": 400, "msg": message}
