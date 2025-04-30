@@ -51,11 +51,7 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         logger.error(f"CDK is the same, _from: {_from}, to: {to}")
         return {"ec": 403, "msg": "CDK is same, Order already transferred"}
 
-    try:
-        from_plan = Plan.get(Plan.plan_id == from_bill.plan_id)
-    except Exception as e:
-        logger.error(f"Plan not found, order_id: {from_bill.order_id}, error: {e}")
-        return {"ec": 500, "msg": "Plan not found"}
+    delta = from_bill.expired_at - now
 
     from_bill.expired_at = now
     # cdk-backend 那边不允许过去的时间，加个10秒的缓冲
@@ -68,7 +64,6 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
     from_bill.transferred = -1
     from_bill.save()
 
-    delta = timedelta(days=from_plan.valid_days * from_bill.buy_count)
 
     if to_bill.expired_at > now:
         to_bill.expired_at = to_bill.expired_at + delta
