@@ -52,7 +52,7 @@ async def create_order(pay: str, plan_id: str, request: Request):
         "amount": plan.amount,
         "client_ip": client_ip,
         "time_expire": 30,  # 分钟
-        "notify_url": settings.yimapay_notify_url + settings.yimapay_secret_key,
+        "notify_url": settings.yimapay_notify_url + settings.yimapay_webhook_secret,
         "attach": json.dumps(attach, separators=(',', ':')),
     }
 
