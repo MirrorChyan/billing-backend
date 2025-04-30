@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     afdian_webhook_secret: str
     afdian_test_out_trade_no: str
 
+    yimapay_create_order_api: str
+    yimapay_app_id: str
+    yimapay_secret_key: str
+    yimapay_notify_url: str
+
     cdk_acquire_api: str
     cdk_renew_api: str
 

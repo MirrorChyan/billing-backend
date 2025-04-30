@@ -41,6 +41,7 @@ class Plan(Model):
     applications = TextField()
     modules = TextField()
     cdk_number = IntegerField()
+    amount = IntegerField() # 分，1元=100分
 
     class Meta:
         database = db
