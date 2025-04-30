@@ -37,7 +37,7 @@ async def create_order(pay: str, plan_id: str, request: Request):
         random.SystemRandom().choices(string.ascii_lowercase + string.digits, k=16)
     )
 
-    client_ip = request.headers.get("X-Forwarded-For", request.client.host).split(",")[0]
+    client_ip = request.headers.get("X-Forwarded-For", request.client.host).split(",")[0].strip()
 
     attach = {
         "pay": pay,
