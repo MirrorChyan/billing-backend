@@ -34,7 +34,7 @@ async def create_order(pay: str, plan_id: str, request: Request):
         return {"ec": 404, "code": 21002, "msg": "Plan not found"}
 
     custom_order_id = datetime.now().strftime("%Y%m%d%H%M%S") + "".join(
-        random.SystemRandom().choices(string.ascii_lowercase + string.digits, k=16)
+        random.SystemRandom().choices(string.ascii_lowercase + string.digits, k=24)
     )
 
     client_ip = request.headers.get("X-Forwarded-For", request.client.host).split(",")[0].strip()
