@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from src.config import settings
 from src.order.factory import process_order
 from .factory import parse_yimapay_data
+from .request_yimapay import gen_sign
 
 router = APIRouter()
 
@@ -13,10 +14,15 @@ async def yimapay_webhook(request: Request):
     form_data = await request.form()
     logger.debug(f"form_data: {form_data}")
 
-    key = form_data.get("key")
-    if key != settings.yimapay_secret_key:
-        logger.error(f"Invalid key: {key}")
-        return {"code": "FAIL", "message": f"Invalid key {key}"}
+    sign = form_data.get("sign")
+    if not sign:
+        logger.error(f"Invalid sign: {sign}")
+        return {"code": "FAIL", "message": f"Invalid sign {sign}"}
+    exptected_sign = gen_sign(form_data)
+    if sign != exptected_sign:
+        logger.error(f"Invalid sign: {sign}, expected: {exptected_sign}")
+        return {"code": "FAIL", "message": f"Invalid sign {sign}"}
+    
 
     app_id = form_data.get("app_id")
     if app_id != settings.yimapay_app_id:

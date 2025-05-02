@@ -5,20 +5,22 @@ import asyncio
 
 from src.config import settings
 
-
-async def query(url: str, params: dict) -> dict:
-    logger.debug(f"url: {url}, params: {params}")
-
-    params["app_id"] = settings.yimapay_app_id
-
+def gen_sign(params: dict) -> str:
     # 第一步：对参数按照key=value的格式，并按照参数名ASCII字典序排序
     sign = "&".join([f"{key}={value}" for key, value in sorted(params.items()) if value])
     # 第二步：拼接API密钥
     sign = f"{sign}&key={settings.yimapay_secret_key}"
     # 第三步：进行MD5运算，再将得到的字符串所有字符转换为大写
     sign = hashlib.md5(sign.encode("utf-8")).hexdigest().upper()
+    return sign
 
-    params["sign"] = sign
+async def query(url: str, params: dict) -> dict:
+    logger.debug(f"url: {url}, params: {params}")
+
+    params["app_id"] = settings.yimapay_app_id
+
+    # gen_sign必须是最后一步
+    params["sign"] = gen_sign(params)
 
     for i in range(1, 4):
         try:
