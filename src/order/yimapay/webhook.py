@@ -1,6 +1,7 @@
 from typing import Annotated
 from loguru import logger
 from fastapi import APIRouter, Form, Request, Response
+import asyncio
 
 from src.config import settings
 from .factory import process_yimapay_order
@@ -21,6 +22,9 @@ async def yimapay_webhook(app_id: Annotated[str, Form()], trade_no: Annotated[st
         logger.error(f"Invalid trade_no: {trade_no}")
         response.status_code = 400
         return {"code": "FAIL", "message": f"Invalid trade_no {trade_no}"}
+
+    # Yimapay 第一次回调来的时候，他们服务器可能有点延迟，立马查查到的是还未完成付款
+    asyncio.sleep(1)
 
     success, message = await process_yimapay_order(trade_no)
     if not success:

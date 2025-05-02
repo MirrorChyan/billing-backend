@@ -42,7 +42,7 @@ async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
         logger.error(
             f"trade_state is not success, state: {state}, response: {response}"
         )
-        return None, f"Trade not success {platform_trade_no}"
+        return None, f"Trade not success {platform_trade_no}, state: {state}"
 
     attach = json.loads(unquote(data["attach"]))
 
