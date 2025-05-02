@@ -4,7 +4,6 @@ from loguru import logger
 from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime
 import random
-from loguru import logger
 
 from src.database import Plan
 from src.config import settings
