@@ -18,11 +18,11 @@ async def yimapay_webhook(request: Request):
     if not sign:
         logger.error(f"Invalid sign: {sign}")
         return {"code": "FAIL", "message": f"Invalid sign {sign}"}
+
     exptected_sign = gen_sign(form_data)
     if sign != exptected_sign:
         logger.error(f"Invalid sign: {sign}, expected: {exptected_sign}")
         return {"code": "FAIL", "message": f"Invalid sign {sign}"}
-    
 
     app_id = form_data.get("app_id")
     if app_id != settings.yimapay_app_id:
