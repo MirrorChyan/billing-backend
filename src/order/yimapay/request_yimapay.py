@@ -7,7 +7,7 @@ from src.config import settings
 
 def gen_sign(params: dict) -> str:
     # 第一步：对参数按照key=value的格式，并按照参数名ASCII字典序排序
-    sign = "&".join([f"{key}={value}" for key, value in sorted(params.items()) if value])
+    sign = "&".join([f"{key}={value}" for key, value in sorted(params.items()) if key != "sign" and value])
     # 第二步：拼接API密钥
     sign = f"{sign}&key={settings.yimapay_secret_key}"
     # 第三步：进行MD5运算，再将得到的字符串所有字符转换为大写
