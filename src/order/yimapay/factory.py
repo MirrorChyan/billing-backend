@@ -11,7 +11,7 @@ from .request_yimapay import query
 
 async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
     if not platform_trade_no:
-        logger.error(f"out_trade_no is reuqired: {platform_trade_no}")
+        logger.error(f"out_trade_no is required: {platform_trade_no}")
         return None, "not an order"
 
     params = {
