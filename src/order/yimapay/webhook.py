@@ -39,7 +39,7 @@ async def yimapay_webhook(request: Request):
         logger.error(f"Invalid trade_no: {trade_no}")
         return {"ec": 400, "code": "FAIL", "message": f"Invalid trade_no {trade_no}"}
 
-    order_data = parse_yimapay_data(form_data, form_data)
+    order_data = parse_yimapay_data(form_data, dict(form_data))
     if not order_data:
         logger.error(f"Parse order data failed, trade_no: {trade_no}")
         return {"code": "FAIL", "message": f"Parse order data failed: {trade_no}"}

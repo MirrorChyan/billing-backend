@@ -32,7 +32,7 @@ async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
         )
         return None, f"Create order failed {platform_trade_no}"
 
-    order_data = parse_yimapay_data(response.get("Data"), response)
+    order_data = parse_yimapay_data(response["Data"], response)
     if not order_data:
         logger.error(
             f"Parse order data failed, url: {settings.yimapay_create_order_api}, params: {params}, response: {response}"
@@ -43,10 +43,6 @@ async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
 
 
 def parse_yimapay_data(data: dict, response: Any) -> OrderData | None:
-    if not data:
-        logger.error(f"Query order failed, no data found, response: {response}")
-        return None
-
     state = data["trade_state"]
     if state != "success":
         logger.error(
