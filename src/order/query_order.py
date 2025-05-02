@@ -19,14 +19,12 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         return {"ec": 400, "code": 21001, "msg": "order_id is required"}
 
     if not bill:
-        # 如果订单号是正确的，能走到这里说明没收到平台的推送
-        # 主动去平台查一下
-        # logger.warning(
-        #     f"Bill not found, order_id: {order_id}, custom_order_id: {custom_order_id}"
-        # )
-        if not order_id:
-            return {"ec": 400, "code": 21001, "msg": "order_id is required"}
+        if not order_id:  # 通过 custom_order_id 来查的
+            return {"ec": 404, "code": 21002, "msg": "order not found"}
 
+        logger.warning(
+            f"Bill not found, order_id: {order_id}, try to query from Afdian/Yimapay"
+        )
         if order_id.startswith("YMF"):
             bill, message = await process_yimapay_order(order_id)
         elif order_id.isdigit():
