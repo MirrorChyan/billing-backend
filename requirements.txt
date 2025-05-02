@@ -7,3 +7,4 @@ pymysql
 python-dotenv
 pydantic_settings
 playhouse
+python-multipart

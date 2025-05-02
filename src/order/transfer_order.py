@@ -8,7 +8,7 @@ from src.database import Bill, Plan, Transaction, Reward
 router = APIRouter()
 
 
-@router.get("/order/afdian/transfer")
+@router.get("/order/transfer")
 async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
     logger.debug(f"_from: {_from}, to: {to}")
 
@@ -16,18 +16,18 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         logger.error(f"_from or to is None")
         return {"ec": 400, "msg": "from and to is required"}
 
-    to_bill = Bill.get_or_none(Bill.platform == "afdian", Bill.order_id == to)
+    to_bill = Bill.get_or_none(Bill.order_id == to)
 
     if not to_bill:
         logger.error(f"order not found, to: {to}")
         return {"ec": 400, "msg": "Order not found"}
 
-    if not _from.isdigit():
+    if not _from.isdigit() and not _from.startswith("YMF"): # yimapay 的脏逻辑（
         reward = await get_reward(_from, to_bill)
         if reward:
             return reward
 
-    from_bill = Bill.get_or_none(Bill.platform == "afdian", Bill.order_id == _from)
+    from_bill = Bill.get_or_none(Bill.order_id == _from)
     if not from_bill:
         logger.error(f"order not found, _from: {_from}")
         return {"ec": 400, "msg": "Order not found"}
@@ -51,13 +51,7 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         logger.error(f"CDK is the same, _from: {_from}, to: {to}")
         return {"ec": 403, "msg": "CDK is same, Order already transferred"}
 
-    try:
-        from_plan = Plan.get(
-            Plan.platform == "afdian", Plan.plan_id == from_bill.plan_id
-        )
-    except Exception as e:
-        logger.error(f"Plan not found, order_id: {from_bill.order_id}, error: {e}")
-        return {"ec": 500, "msg": "Plan not found"}
+    delta = from_bill.expired_at - now
 
     from_bill.expired_at = now
     # cdk-backend 那边不允许过去的时间，加个10秒的缓冲
@@ -70,7 +64,6 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
     from_bill.transferred = -1
     from_bill.save()
 
-    delta = timedelta(days=from_plan.valid_days * from_bill.buy_count)
 
     if to_bill.expired_at > now:
         to_bill.expired_at = to_bill.expired_at + delta
@@ -83,14 +76,14 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
     to_bill.save()
 
     Transaction.create(
-        from_platform="afdian",
+        from_platform=from_bill.platform,
         from_order_id=_from,
-        to_platform="afdian",
+        to_platform=to_bill.platform,
         to_order_id=to,
         transfered_at=now,
         daysdelta=delta.days,
         new_expired_at=to_bill.expired_at,
-        why="/order/afdian/transfer/other_order",
+        why="transfer/other_order",
     )
 
     logger.success(
@@ -125,7 +118,7 @@ async def get_reward(_from: str, to_bill):
             "ec": 403,
             "msg": "Reward remaining <= 0",
         }
-    
+
     if to_bill.expired_at < now:
         logger.error(f"order expired, to: {to_bill.order_id}")
         return {
@@ -133,7 +126,10 @@ async def get_reward(_from: str, to_bill):
             "msg": "Order expired",
         }
 
-    if to_bill.created_at < reward.order_created_after or to_bill.created_at > reward.order_created_before:
+    if (
+        to_bill.created_at < reward.order_created_after
+        or to_bill.created_at > reward.order_created_before
+    ):
         logger.error(f"The order creation time does not match, to: {to_bill.order_id}")
         return {
             "ec": 403,
@@ -146,13 +142,13 @@ async def get_reward(_from: str, to_bill):
     _, created = Transaction.get_or_create(
         from_platform="reward",
         from_order_id=_from,
-        to_platform="afdian",
+        to_platform=to_bill.platform,
         to_order_id=to_bill.order_id,
         defaults={
             "transfered_at": now,
             "daysdelta": delta.days,
             "new_expired_at": new_expired_at,
-            "why": "/order/afdian/transfer/reward",
+            "why": "transfer/reward",
         },
     )
     if not created:

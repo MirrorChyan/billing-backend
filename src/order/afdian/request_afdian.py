@@ -48,9 +48,3 @@ async def query(url: str, params: dict) -> dict:
 
 async def query_order_by_out_trade_no(out_trade_no: str) -> dict:
     return await query(settings.afdian_query_order_api, {"out_trade_no": out_trade_no})
-
-
-async def query_order_by_page(page: int = 1, per_page: int = 100) -> dict:
-    return await query(
-        settings.afdian_query_order_api, {"page": page, "per_page": per_page}
-    )
