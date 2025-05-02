@@ -19,8 +19,8 @@ async def yimapay_webhook(request: Request):
         logger.error(f"Invalid sign: {sign}")
         return {"code": "FAIL", "message": f"Invalid sign {sign}"}
 
-    exptected_sign = gen_sign(form_data)
-    if sign != exptected_sign:
+    expected_sign = gen_sign(form_data)
+    if sign != expected_sign:
         logger.error(f"Invalid sign: {sign}, expected: {exptected_sign}")
         return {"code": "FAIL", "message": f"Invalid sign {sign}"}
 
