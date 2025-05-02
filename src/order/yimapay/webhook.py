@@ -35,8 +35,8 @@ async def yimapay_webhook(request: Request):
 
     order_data = parse_yimapay_data(form_data, form_data)
     if not order_data:
-        logger.error(f"Parse order data failed, form_data: {form_data}")
-        return {"code": "FAIL", "message": "Parse order data failed"}
+        logger.error(f"Parse order data failed, trade_no: {trade_no}")
+        return {"code": "FAIL", "message": f"Parse order data failed: {trade_no}"}
 
     success, message = await process_order(order_data)
     if not success:
