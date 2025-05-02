@@ -32,17 +32,27 @@ async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
         )
         return None, f"Create order failed {platform_trade_no}"
 
-    data = response.get("Data")
+    order_data = parse_yimapay_data(response.get("Data"), response)
+    if not order_data:
+        logger.error(
+            f"Parse order data failed, url: {settings.yimapay_create_order_api}, params: {params}, response: {response}"
+        )
+        return None, f"Parse order data failed {platform_trade_no}"
+
+    return await process_order(order_data)
+
+
+def parse_yimapay_data(data: dict, response: Any) -> OrderData | None:
     if not data:
         logger.error(f"Query order failed, no data found, response: {response}")
-        return None, f"Query order failed {platform_trade_no}"
+        return None
 
     state = data["trade_state"]
     if state != "success":
         logger.error(
             f"trade_state is not success, state: {state}, response: {response}"
         )
-        return None, f"Trade not success {platform_trade_no}, state: {state}"
+        return None
 
     attach = json.loads(unquote(data["attach"]))
 
@@ -60,7 +70,7 @@ async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
         )
         created_at = datetime.now()
 
-    order_data = OrderData(
+    return OrderData(
         platform="yimapay",
         platform_trade_no=data["trade_no"],
         custom_order_id=data["out_trade_no"],
@@ -72,5 +82,3 @@ async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
         original_price=amount,  # 不知道原价，先按照实际支付的价格来
         raw_data=json.dumps(response),
     )
-
-    return await process_order(order_data)
