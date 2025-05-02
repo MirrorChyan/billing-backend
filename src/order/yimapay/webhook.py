@@ -10,7 +10,9 @@ router = APIRouter()
 
 
 @router.post("/order/yimapay/webhook/" + settings.yimapay_webhook_secret)
-async def yimapay_webhook(app_id: Annotated[str, Form()], trade_no: Annotated[str, Form()], response: Response):
+async def yimapay_webhook(
+    app_id: Annotated[str, Form()], trade_no: Annotated[str, Form()], response: Response
+):
     logger.debug(f"app_id: {app_id}, trade_no: {trade_no}")
 
     if app_id != settings.yimapay_app_id:
@@ -23,18 +25,20 @@ async def yimapay_webhook(app_id: Annotated[str, Form()], trade_no: Annotated[st
         response.status_code = 400
         return {"code": "FAIL", "message": f"Invalid trade_no {trade_no}"}
 
-    # Yimapay 第一次回调来的时候，他们服务器可能有点延迟，立马查查到的是还未完成付款
-    await asyncio.sleep(1)
-
-    success, message = await process_yimapay_order(trade_no)
-    if not success:
-        logger.error(
-            f"Process order failed, trade_no: {trade_no}, message: {message}"
-        )
+    for i in range(1, 4):
+        # yimapay webhook 有延迟，查到的还是等待支付状态
+        await asyncio.sleep(i)
+        logger.debug(f"Process order, trade_no: {trade_no}, attempt: {i}")
+        success, message = await process_yimapay_order(trade_no)
+        if success:
+            break
+    else:
+        logger.error(f"Process order failed, trade_no: {trade_no}, message: {message}")
         response.status_code = 500
-        return {"code": "FAIL", "message": f"{message} {trade_no}"}
+        return {
+            "code": "FAIL",
+            "message": f"Process order failed, trade_no: {trade_no}, message: {message}",
+        }
 
-    logger.success(
-        f"Process order success, trade_no: {trade_no}, message: {message}"
-    )
+    logger.success(f"Process order success, trade_no: {trade_no}, message: {message}")
     return {"code": "SUCCESS", "message": "Success"}
