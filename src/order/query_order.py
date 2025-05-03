@@ -12,7 +12,7 @@ router = APIRouter()
 async def query_order(order_id: str = None, custom_order_id: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
     if order_id:
-        bill = Bill.get_or_none(Bill.order_id == order_id)
+        bill = Bill.get_or_none((Bill.order_id == order_id) | (Bill.custom_order_id == order_id))
     elif custom_order_id:
         bill = Bill.get_or_none(Bill.custom_order_id == custom_order_id)
     else:
@@ -62,6 +62,7 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         "data": {
             "platform": bill.platform,
             "order_id": bill.order_id,
+            "custom_order_id": bill.custom_order_id,
             "plan_id": bill.plan_id,
             "buy_count": bill.buy_count,
             "user_id": bill.user_id,

@@ -12,6 +12,7 @@ from .request_yimapay import query
 
 router = APIRouter()
 
+ORDER_EXPIRY_TIME = 60  # 60 minutes
 
 @router.get("/order/yimapay/create")
 async def create_order(pay: str, plan_id: str, request: Request):
@@ -50,7 +51,7 @@ async def create_order(pay: str, plan_id: str, request: Request):
         "description": plan.title,
         "amount": plan.amount,
         "client_ip": client_ip,
-        "time_expire": 30,  # 分钟
+        "time_expire": ORDER_EXPIRY_TIME,  # 分钟
         "notify_url": settings.yimapay_notify_url + settings.yimapay_webhook_secret,
         "attach": json.dumps(attach, separators=(',', ':')),
     }
@@ -85,6 +86,7 @@ async def create_order(pay: str, plan_id: str, request: Request):
         "msg": "success",
         "data": {
             "pay_url": pay_url,
+            "expiry_time": ORDER_EXPIRY_TIME,
             "custom_order_id": custom_order_id,
             "amount": plan.amount,
             "title": plan.title,
