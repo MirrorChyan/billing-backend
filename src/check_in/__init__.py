@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post("/check_in/" + settings.check_in_secret)
 async def check_in(body: dict):
-    logger.debug(f"body: {body}")
+    # logger.debug(f"body: {body}")
 
     now = datetime.now()
 
