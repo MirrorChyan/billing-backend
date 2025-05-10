@@ -3,6 +3,7 @@ from loguru import logger
 from datetime import datetime
 
 from src.config import settings
+from src.exception_notifer import exception_notify
 
 
 async def renew_cdk(cdk: str, expireTime: datetime) -> bool:
@@ -18,6 +19,7 @@ async def renew_cdk(cdk: str, expireTime: datetime) -> bool:
                 logger.debug(f"url: {settings.cdk_renew_api}, query_body: {query_body}, response: {response}")
     except Exception as e:
         logger.error(f"Renew CDK failed, error: {e}")
+        await exception_notify("Auth", e)
         return False
 
     error_code = response.get("code", 1)

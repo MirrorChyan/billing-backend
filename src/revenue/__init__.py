@@ -152,7 +152,7 @@ def query_db(rid: str, date: datetime, is_ua: bool):
         )
 
     bills = Bill.select(
-        Bill.plan_id, Bill.created_at, Bill.buy_count, Bill.actually_paid, Bill.cdk
+        Bill.platform, Bill.plan_id, Bill.created_at, Bill.buy_count, Bill.actually_paid, Bill.cdk
     ).where(
         Bill.cdk << [checkin.cdk for checkin in checkins],
         Bill.transferred >= 0,
@@ -173,6 +173,7 @@ def query_db(rid: str, date: datetime, is_ua: bool):
             ua = checkin.user_agent if checkin.user_agent else f"{app}-NoUA"
             data.append(
                 {
+                    "platform": b.platform,
                     "activated_at": checkin.activated_at,
                     "application": app,
                     "user_agent": ua,

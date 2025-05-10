@@ -6,6 +6,7 @@ import hashlib
 import asyncio
 
 from src.config import settings
+from src.exception_notifer import exception_notify
 
 
 async def query(url: str, params: dict) -> dict:
@@ -39,6 +40,7 @@ async def query(url: str, params: dict) -> dict:
                     return response
         except Exception as e:
             logger.error(f"url: {url}, params: {params}, query error: {e}")
+            await exception_notify("爱发电", e)
             await asyncio.sleep(i * i)
             continue
 
