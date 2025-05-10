@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from src.config import settings
+from src.exception_notifer import exception_notify
 
 
 async def acquire_cdk(expireTime: datetime, group: str) -> Optional[str]:
@@ -23,6 +24,7 @@ async def acquire_cdk(expireTime: datetime, group: str) -> Optional[str]:
                 )
     except Exception as e:
         logger.error(f"Query CDK failed, error: {e}")
+        await exception_notify("Auth", e)
         return None
 
     error_code = response.get("code", 1)

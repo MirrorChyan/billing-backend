@@ -4,6 +4,7 @@ import hashlib
 import asyncio
 
 from src.config import settings
+from src.exception_notifer import exception_notify
 
 def gen_sign(params: dict) -> str:
     # 第一步：对参数按照key=value的格式，并按照参数名ASCII字典序排序
@@ -31,6 +32,7 @@ async def query(url: str, params: dict) -> dict:
                     return response
         except Exception as e:
             logger.error(f"url: {url}, params: {params}, query error: {e}")
+            await exception_notify("易码付", e)
             await asyncio.sleep(i * i)
             continue
 

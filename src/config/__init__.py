@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     check_in_secret: str
     revenue_all_secret: str
 
+    exception_notify_url: str
+
     class Config:
         env_file = ".env"
 
