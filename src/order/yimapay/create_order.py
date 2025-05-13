@@ -21,8 +21,12 @@ async def create_order(pay: str, plan_id: str, request: Request):
     pay_type = 0
     if pay == "AlipayQRCode":
         pay_type = 30
+    elif pay == "AlipayH5":
+        pay_type = 30
     elif pay == "WeChatQRCode":
         pay_type = 20
+    elif pay == "WeChatH5":
+        pay_type = 23
     else:
         logger.error(f"Invalid pay type: {pay}")
         return {"ec": 400, "code": 21001, "msg": "Invalid pay"}
