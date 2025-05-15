@@ -25,9 +25,11 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         logger.warning(
             f"Bill not found, order_id: {order_id}, try to query from Afdian/Yimapay"
         )
-        if order_id.startswith("YMF"):
-            bill, message = await process_yimapay_order(order_id)
-        elif order_id.isdigit():
+        if len(order_id) == 22 and order_id.startswith("YMF"):
+            bill, message = await process_yimapay_order(order_id, "")
+        elif len(order_id) == 32 and order_id[:15].isdigit():
+            bill, message = await process_yimapay_order("", order_id)
+        elif len(order_id) == 27 and order_id.isdigit():
             bill, message = await process_afdian_order(order_id)
         else:
             return {"ec": 404, "code": 21002, "msg": "Order not found"}
