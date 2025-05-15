@@ -9,14 +9,14 @@ from src.config import settings
 from .request_yimapay import query
 
 
-async def process_yimapay_order(platform_trade_no: str) -> Tuple[Any, str]:
-    if not platform_trade_no:
-        logger.error(f"out_trade_no is required: {platform_trade_no}")
+async def process_yimapay_order(platform_trade_no: str, custom_order_id: str) -> Tuple[Any, str]:
+    if not platform_trade_no and not custom_order_id:
+        logger.error(f"out_trade_no is required")
         return None, "not an order"
 
     params = {
         "trade_no": platform_trade_no,
-        "out_trade_no": "",
+        "out_trade_no": custom_order_id,
     }
 
     response = await query(settings.yimapay_query_order_api, params)

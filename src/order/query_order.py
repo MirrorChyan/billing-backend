@@ -9,12 +9,14 @@ router = APIRouter()
 
 
 @router.get("/order/query")
-async def query_order(order_id: str = None, custom_order_id: str = None):
+async def query_order(order_id: str = None, custom_order_id: str = None, cdk: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
     if order_id:
         bill = Bill.get_or_none((Bill.order_id == order_id) | (Bill.custom_order_id == order_id))
     elif custom_order_id:
         bill = Bill.get_or_none(Bill.custom_order_id == custom_order_id)
+    elif cdk:
+        bill = Bill.select().where(Bill.cdk == cdk).order_by(Bill.expired_at.desc()).get_or_none()
     else:
         return {"ec": 400, "code": 21001, "msg": "order_id is required"}
 
@@ -25,15 +27,19 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         logger.warning(
             f"Bill not found, order_id: {order_id}, try to query from Afdian/Yimapay"
         )
-        if order_id.startswith("YMF"):
-            bill, message = await process_yimapay_order(order_id)
-        elif order_id.isdigit():
+        if len(order_id) == 22 and order_id.startswith("YMF"):
+            bill, message = await process_yimapay_order(order_id, "")
+        elif len(order_id) == 32 and order_id[:14].isdigit():
+            bill, message = await process_yimapay_order("", order_id)
+        elif len(order_id) == 27 and order_id.isdigit():
             bill, message = await process_afdian_order(order_id)
         else:
-            return {"ec": 404, "code": 21002, "msg": "Order not found"}
+            logger.error(f"Order not match and platform: {order_id}")
+            return {"ec": 400, "code": 21001, "msg": "order_id not match"}
 
         if not bill:
-            return {"ec": 400, "code": 1, "msg": message}
+            logger.error(f"Order not found: {order_id}, {message}")
+            return {"ec": 404, "code": 21002, "msg": "order not found"}
 
     try:
         plan = Plan.get(Plan.plan_id == bill.plan_id)

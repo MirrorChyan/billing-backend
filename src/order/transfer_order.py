@@ -7,6 +7,7 @@ from src.database import Bill, Plan, Transaction, Reward
 
 router = APIRouter()
 
+CDK_LENGTH = 24
 
 @router.get("/order/transfer")
 async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
@@ -16,18 +17,22 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         logger.error(f"_from or to is None")
         return {"ec": 400, "msg": "from and to is required"}
 
-    to_bill = Bill.get_or_none(Bill.order_id == to)
+    if len(to) != CDK_LENGTH:
+        logger.error(f"bad to: {to}")
+        return {"ec": 400, "msg": "bad to"}
+
+    to_bill = Bill.select().where(Bill.cdk == to).order_by(Bill.expired_at.desc()).get_or_none()
 
     if not to_bill:
-        logger.error(f"order not found, to: {to}")
-        return {"ec": 400, "msg": "Order not found"}
+        logger.error(f"cdk not found, to: {to}")
+        return {"ec": 400, "msg": "cdk not found"}
 
-    if not _from.isdigit() and not _from.startswith("YMF"): # yimapay 的脏逻辑（
+    if len(_from) != CDK_LENGTH:
         reward = await get_reward(_from, to_bill)
         if reward:
             return reward
 
-    from_bill = Bill.get_or_none(Bill.order_id == _from)
+    from_bill = Bill.select().where(Bill.cdk == _from).order_by(Bill.expired_at.desc()).get_or_none()
     if not from_bill:
         logger.error(f"order not found, _from: {_from}")
         return {"ec": 400, "msg": "Order not found"}
@@ -83,7 +88,7 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         transfered_at=now,
         daysdelta=delta.days,
         new_expired_at=to_bill.expired_at,
-        why="transfer/other_order",
+        why="transfer/cdk",
     )
 
     logger.success(
