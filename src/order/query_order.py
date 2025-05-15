@@ -27,15 +27,17 @@ async def query_order(order_id: str = None, custom_order_id: str = None):
         )
         if len(order_id) == 22 and order_id.startswith("YMF"):
             bill, message = await process_yimapay_order(order_id, "")
-        elif len(order_id) == 32 and order_id[:15].isdigit():
+        elif len(order_id) == 32 and order_id[:14].isdigit():
             bill, message = await process_yimapay_order("", order_id)
         elif len(order_id) == 27 and order_id.isdigit():
             bill, message = await process_afdian_order(order_id)
         else:
-            return {"ec": 404, "code": 21002, "msg": "Order not found"}
+            logger.error(f"Order not match and platform: {order_id}")
+            return {"ec": 400, "code": 21001, "msg": "order_id not match"}
 
         if not bill:
-            return {"ec": 400, "code": 1, "msg": message}
+            logger.error(f"Order not found: {order_id}, {message}")
+            return {"ec": 404, "code": 21002, "msg": "order not found"}
 
     try:
         plan = Plan.get(Plan.plan_id == bill.plan_id)
