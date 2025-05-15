@@ -9,12 +9,14 @@ router = APIRouter()
 
 
 @router.get("/order/query")
-async def query_order(order_id: str = None, custom_order_id: str = None):
+async def query_order(order_id: str = None, custom_order_id: str = None, cdk: str = None):
     # logger.debug(f"order_id: {order_id}, custom_order_id: {custom_order_id}")
     if order_id:
         bill = Bill.get_or_none((Bill.order_id == order_id) | (Bill.custom_order_id == order_id))
     elif custom_order_id:
         bill = Bill.get_or_none(Bill.custom_order_id == custom_order_id)
+    elif cdk:
+        bill = Bill.select().where(Bill.cdk == cdk).order_by(Bill.expired_at.desc()).get_or_none()
     else:
         return {"ec": 400, "code": 21001, "msg": "order_id is required"}
 

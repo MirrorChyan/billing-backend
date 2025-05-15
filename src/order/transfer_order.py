@@ -21,7 +21,7 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         logger.error(f"bad to: {to}")
         return {"ec": 400, "msg": "bad to"}
 
-    to_bill = Bill.get_or_none(Bill.cdk == to)
+    to_bill = Bill.select().where(Bill.cdk == to).order_by(Bill.expired_at.desc()).get_or_none()
 
     if not to_bill:
         logger.error(f"cdk not found, to: {to}")
@@ -32,7 +32,7 @@ async def transfer_order(_from: str = Query(..., alias="from"), to: str = None):
         if reward:
             return reward
 
-    from_bill = Bill.get_or_none(Bill.cdk == _from)
+    from_bill = Bill.select().where(Bill.cdk == _from).order_by(Bill.expired_at.desc()).get_or_none()
     if not from_bill:
         logger.error(f"order not found, _from: {_from}")
         return {"ec": 400, "msg": "Order not found"}
