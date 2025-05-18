@@ -58,7 +58,7 @@ async def query_order(order_id: str = None, custom_order_id: str = None, cdk: st
         .get_or_none()
     )
     if not latest_bill:
-        logger.error(f"CDK not found, order_id: {order_id}")
+        logger.error(f"latest_bill not found, order_id: {order_id}")
         return {"ec": 500, "code": 21000, "msg": "Unknow error, please contact us!"}
 
     return {
